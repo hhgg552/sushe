@@ -1,0 +1,4514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>501宿舍 | 电气2301 - 扬州职业技术大学</title>
+<style>
+/* ============================================
+   CSS 变量与全局重置
+   ============================================ */
+:root {
+  --navy: #1A365D;
+  --navy-light: #2A4A7F;
+  --navy-dark: #0F2240;
+  --cream: #F5F0E8;
+  --cream-dark: #E8E0D3;
+  --white: #FDFAF5;
+  --text: #2D2D2D;
+  --text-light: #5A5A5A;
+  --gold: #B8975A;
+  --gold-light: #D4B87A;
+  --stitch-color: rgba(26, 54, 93, 0.25);
+  --card-width: 280px;
+  --card-height: 370px;
+  --gap: 32px;
+}
+
+@font-face {
+  font-family: 'StitchedSerif';
+  src: local('Georgia'), local('Noto Serif SC'), local('SimSun');
+}
+
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  cursor: none;
+}
+
+body {
+  font-family: 'Noto Serif SC', 'STSong', 'SimSun', 'Georgia', 'Songti SC', serif;
+  background-color: var(--cream);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  line-height: 1.8;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ============================================
+   亚麻布料背景纹理系统
+   ============================================ */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--cream);
+  /* 经纬编织纹路 + 刺绣暗纹 */
+  background-image:
+    /* 水平纬线 */
+    repeating-linear-gradient(
+      180deg,
+      transparent,
+      transparent 2px,
+      rgba(139, 119, 90, 0.06) 2px,
+      rgba(139, 119, 90, 0.06) 3px
+    ),
+    /* 垂直经线 */
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 2px,
+      rgba(139, 119, 90, 0.08) 2px,
+      rgba(139, 119, 90, 0.08) 3px
+    ),
+    /* 斜纹肌理 */
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 40px,
+      rgba(139, 119, 90, 0.015) 40px,
+      rgba(139, 119, 90, 0.015) 42px
+    ),
+    /* 刺绣虚线暗纹 */
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 60px,
+      rgba(26, 54, 93, 0.02) 60px,
+      rgba(26, 54, 93, 0.02) 60.5px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 60px,
+      rgba(26, 54, 93, 0.015) 60px,
+      rgba(26, 54, 93, 0.015) 60.5px
+    );
+}
+
+/* SVG 噪点滤镜 - 布料颗粒感 */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
+}
+
+/* ============================================
+   自定义光标 - 小圆球
+   ============================================ */
+#custom-cursor {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--navy);
+  border: 2px solid rgba(26, 54, 93, 0.5);
+  position: fixed;
+  pointer-events: none;
+  z-index: 10000;
+  transform: translate(-50%, -50%);
+  transition: width 0.25s ease, height 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+  box-shadow: 0 0 12px rgba(26, 54, 93, 0.25);
+}
+
+#custom-cursor.on-card {
+  width: 40px;
+  height: 40px;
+  background: rgba(26, 54, 93, 0.15);
+  border-color: rgba(26, 54, 93, 0.6);
+  box-shadow: 0 0 24px rgba(26, 54, 93, 0.15);
+}
+
+/* 光标尾迹小点 */
+.cursor-trail {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(26, 54, 93, 0.35);
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  animation: trail-fade 0.7s ease-out forwards;
+}
+
+@keyframes trail-fade {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(0); }
+}
+
+/* ============================================
+   加载动画 — 针线编织进度
+   ============================================ */
+#loading-screen {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 10001;
+  background-color: var(--cream);
+  background-image:
+    repeating-linear-gradient(180deg, transparent, transparent 2px, rgba(139,119,90,0.06) 2px, rgba(139,119,90,0.06) 3px),
+    repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(139,119,90,0.08) 2px, rgba(139,119,90,0.08) 3px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+
+#loading-screen.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.loading-thread {
+  width: 200px;
+  height: 3px;
+  background: rgba(26, 54, 93, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+
+.loading-thread-fill {
+  height: 100%;
+  background: var(--navy);
+  border-radius: 2px;
+  width: 0%;
+  animation: thread-fill 1.5s ease-in-out forwards;
+  position: relative;
+}
+
+.loading-thread-fill::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: -2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--navy);
+  box-shadow: 0 0 8px rgba(26, 54, 93, 0.5);
+}
+
+@keyframes thread-fill {
+  0% { width: 0%; }
+  100% { width: 100%; }
+}
+
+.loading-text {
+  margin-top: 18px;
+  font-size: 12px;
+  color: var(--navy);
+  letter-spacing: 6px;
+  opacity: 0.7;
+  animation: loading-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes loading-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.9; }
+}
+
+/* ============================================
+   回到顶部按钮
+   ============================================ */
+#backToTop {
+  position: fixed;
+  bottom: 36px;
+  right: 36px;
+  z-index: 9997;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 2px dashed rgba(26, 54, 93, 0.35);
+  background: var(--cream);
+  color: var(--navy);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(12px);
+  transition: all 0.5s ease;
+  outline: none;
+  box-shadow: 0 2px 12px rgba(26, 54, 93, 0.06);
+}
+
+#backToTop.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+#backToTop:hover {
+  border-color: rgba(26, 54, 93, 0.7);
+  box-shadow: 0 4px 20px rgba(26, 54, 93, 0.15);
+  transform: translateY(-3px);
+  background: rgba(26, 54, 93, 0.03);
+}
+
+#backToTop:active {
+  transform: translateY(0);
+}
+
+/* ============================================
+   页面主容器
+   ============================================ */
+.page-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+/* ============================================
+   装饰性针线元素
+   ============================================ */
+.stitch-line {
+  width: 100%;
+  height: 2px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--navy) 0px,
+    var(--navy) 6px,
+    transparent 6px,
+    transparent 12px
+  );
+  opacity: 0.3;
+  margin: 0 auto;
+}
+
+.stitch-line.vertical {
+  width: 2px;
+  height: 120px;
+  background: repeating-linear-gradient(
+    180deg,
+    var(--navy) 0px,
+    var(--navy) 6px,
+    transparent 6px,
+    transparent 12px
+  );
+  margin: 0 auto;
+}
+
+/* 角落十字绣装饰 */
+.corner-stitch {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  opacity: 0.4;
+}
+.corner-stitch::before,
+.corner-stitch::after {
+  content: '';
+  position: absolute;
+  background: var(--navy);
+}
+.corner-stitch::before {
+  width: 100%;
+  height: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.corner-stitch::after {
+  height: 100%;
+  width: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* ============================================
+   顶部标题区 - 首屏全屏居中
+   ============================================ */
+.header {
+  text-align: center;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 20px;
+  position: relative;
+}
+
+.header-inner {
+  flex: 0 0 auto;
+}
+
+.header-stitch-top {
+  width: 200px;
+  margin: 0 auto 30px;
+}
+
+/* 向下滚动提示 */
+.scroll-hint {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  animation: fade-in-up 1.2s 1s both;
+  cursor: pointer;
+}
+
+.scroll-hint span {
+  font-size: 11px;
+  color: var(--gold);
+  letter-spacing: 4px;
+}
+
+.scroll-hint-arrow {
+  width: 24px;
+  height: 24px;
+  border-right: 2px solid var(--gold);
+  border-bottom: 2px solid var(--gold);
+  transform: rotate(45deg);
+  opacity: 0.6;
+  animation: scroll-bounce 2s ease-in-out infinite;
+}
+
+@keyframes scroll-bounce {
+  0%, 100% { transform: rotate(45deg) translateY(0); opacity: 0.6; }
+  50% { transform: rotate(45deg) translateY(6px); opacity: 1; }
+}
+
+.header-subtitle {
+  font-size: 15px;
+  color: var(--gold);
+  letter-spacing: 10px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  font-weight: normal;
+  animation: fade-in-up 1.2s 0.2s both;
+}
+
+.header-title {
+  font-size: 52px;
+  font-weight: bold;
+  color: var(--navy);
+  letter-spacing: 12px;
+  margin-bottom: 10px;
+  line-height: 1.3;
+  text-shadow:
+    1px 1px 0 rgba(26, 54, 93, 0.08),
+    2px 2px 0 rgba(26, 54, 93, 0.05),
+    -1px -1px 0 rgba(255, 255, 255, 0.3);
+  display: inline-block;
+  animation: stitch-title 1.8s 0.4s both;
+}
+
+.header-title .dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: var(--gold);
+  border-radius: 50%;
+  margin: 0 8px;
+  vertical-align: middle;
+  position: relative;
+  top: -6px;
+}
+
+.header-class {
+  font-size: 18px;
+  color: var(--navy-light);
+  letter-spacing: 6px;
+  margin-top: 8px;
+  animation: fade-in-up 1.2s 0.6s both;
+}
+
+.header-school {
+  font-size: 14px;
+  color: var(--text-light);
+  letter-spacing: 4px;
+  margin-top: 12px;
+  animation: fade-in-up 1.2s 0.7s both;
+}
+
+.header-stitch-bottom {
+  width: 300px;
+  margin: 30px auto 0;
+}
+
+/* 标题编织动画 */
+@keyframes stitch-title {
+  0% {
+    clip-path: inset(0 100% 0 0);
+    letter-spacing: 30px;
+    opacity: 0;
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+    letter-spacing: 12px;
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================
+   成员卡片展示区
+   ============================================ */
+.members-section {
+  padding: 40px 20px 70px;
+}
+
+.section-label {
+  text-align: center;
+  font-size: 13px;
+  color: var(--gold);
+  letter-spacing: 8px;
+  margin-bottom: 50px;
+  position: relative;
+}
+
+.section-label::after {
+  content: '';
+  display: block;
+  width: 60px;
+  height: 1px;
+  background: var(--gold);
+  margin: 14px auto 0;
+  opacity: 0.5;
+}
+
+.members-grid {
+  display: grid;
+  grid-template-columns: repeat(3, var(--card-width));
+  grid-template-rows: repeat(2, auto);
+  gap: var(--gap) 40px;
+  justify-content: center;
+  justify-items: center;
+}
+
+/* 单张成员卡片 */
+.member-card {
+  width: var(--card-width);
+  position: relative;
+  animation: card-stitch-in 1s both;
+}
+
+.member-card:nth-child(1) { animation-delay: 0.5s; }
+.member-card:nth-child(2) { animation-delay: 0.65s; }
+.member-card:nth-child(3) { animation-delay: 0.8s; }
+.member-card:nth-child(4) { animation-delay: 0.7s; }
+.member-card:nth-child(5) { animation-delay: 0.85s; }
+.member-card:nth-child(6) { animation-delay: 1.0s; }
+
+/* 双层编织边框 */
+.card-frame {
+  position: relative;
+  width: var(--card-width);
+  height: var(--card-height);
+  border-radius: 6px;
+  overflow: hidden;
+  /* 外层虚线边框 - 模拟针脚 */
+  border: 3px dashed rgba(26, 54, 93, 0.35);
+  /* 内层边框 */
+  outline: 1px solid rgba(26, 54, 93, 0.15);
+  outline-offset: -8px;
+  transition: border-color 0.5s ease, outline-color 0.5s ease, transform 0.5s ease, box-shadow 0.5s ease;
+  box-shadow:
+    0 2px 16px rgba(26, 54, 93, 0.06),
+    inset 0 0 0 0 rgba(26, 54, 93, 0);
+}
+
+/* 卡片悬浮 - 针线提亮 + 微动 */
+.member-card:hover .card-frame {
+  border-color: rgba(26, 54, 93, 0.6);
+  outline-color: rgba(26, 54, 93, 0.3);
+  transform: translateY(-4px);
+  box-shadow:
+    0 8px 32px rgba(26, 54, 93, 0.12),
+    inset 0 0 60px rgba(26, 54, 93, 0.02);
+}
+
+/* 十字绣四角装饰 */
+.card-frame::before {
+  content: '';
+  position: absolute;
+  top: 12px; left: 12px;
+  width: 14px; height: 14px;
+  z-index: 5;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  background:
+    linear-gradient(90deg, transparent 6px, var(--navy) 6px, var(--navy) 8px, transparent 8px),
+    linear-gradient(0deg, transparent 6px, var(--navy) 6px, var(--navy) 8px, transparent 8px);
+}
+.card-frame::after {
+  content: '';
+  position: absolute;
+  top: 12px; right: 12px;
+  width: 14px; height: 14px;
+  z-index: 5;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  background:
+    linear-gradient(90deg, transparent 6px, var(--navy) 6px, var(--navy) 8px, transparent 8px),
+    linear-gradient(0deg, transparent 6px, var(--navy) 6px, var(--navy) 8px, transparent 8px);
+}
+.member-card:hover .card-frame::before,
+.member-card:hover .card-frame::after {
+  opacity: 0.5;
+}
+
+/* 底部十字绣 */
+.card-corner-bottom {
+  position: absolute;
+  bottom: 12px; left: 12px;
+  width: 14px; height: 14px;
+  z-index: 5;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  background:
+    linear-gradient(90deg, transparent 6px, var(--navy) 6px, var(--navy) 8px, transparent 8px),
+    linear-gradient(0deg, transparent 6px, var(--navy) 6px, var(--navy) 8px, transparent 8px);
+}
+.card-corner-bottom.right {
+  left: auto;
+  right: 12px;
+}
+.member-card:hover .card-corner-bottom {
+  opacity: 0.5;
+}
+
+/* 照片层 */
+.photo-real {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* 卡通层 - clip-path 控制显隐 */
+.cartoon-layer {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 2;
+  will-change: clip-path;
+}
+
+/* 针线纹理叠加层(轻薄) */
+.texture-overlay {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 3;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  mix-blend-mode: multiply;
+}
+
+/* 卡片下方姓名标签 — 编织生长动画 */
+.card-name {
+  text-align: center;
+  margin-top: 16px;
+  font-size: 15px;
+  color: var(--navy);
+  letter-spacing: 4px;
+  font-weight: bold;
+  position: relative;
+  animation: name-stitch-in 0.8s ease both;
+}
+
+.member-card:nth-child(1) .card-name { animation-delay: 0.7s; }
+.member-card:nth-child(2) .card-name { animation-delay: 0.85s; }
+.member-card:nth-child(3) .card-name { animation-delay: 1.0s; }
+.member-card:nth-child(4) .card-name { animation-delay: 0.9s; }
+.member-card:nth-child(5) .card-name { animation-delay: 1.05s; }
+.member-card:nth-child(6) .card-name { animation-delay: 1.2s; }
+
+@keyframes name-stitch-in {
+  0% { opacity: 0; letter-spacing: 12px; clip-path: inset(0 100% 0 0); }
+  100% { opacity: 1; letter-spacing: 4px; clip-path: inset(0 0 0 0); }
+}
+
+.card-name::before,
+.card-name::after {
+  content: '—';
+  color: var(--gold);
+  margin: 0 8px;
+  font-weight: normal;
+  font-size: 12px;
+}
+
+/* 卡片针线生长动画 */
+@keyframes card-stitch-in {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+    clip-path: inset(0 0 100% 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* ============================================
+   集体合照卡片（居中宽幅，同样支持滑动显实）
+   ============================================ */
+.group-photo-section {
+  text-align: center;
+  padding: 10px 20px 40px;
+}
+
+.group-photo-card {
+  display: inline-block;
+  position: relative;
+  animation: card-stitch-in 1s 1.15s both;
+}
+
+.group-photo-card .card-frame {
+  width: 640px;
+  height: 400px;
+}
+
+.group-photo-card:hover .card-frame {
+  border-color: rgba(26, 54, 93, 0.6);
+  outline-color: rgba(26, 54, 93, 0.3);
+  transform: translateY(-4px);
+  box-shadow:
+    0 8px 32px rgba(26, 54, 93, 0.12),
+    inset 0 0 60px rgba(26, 54, 93, 0.02);
+}
+
+.group-photo-card .card-frame::before,
+.group-photo-card .card-frame::after {
+  content: '';
+  position: absolute;
+  width: 14px; height: 14px;
+  z-index: 5;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  background:
+    linear-gradient(90deg, transparent 6px, var(--navy) 6px, var(--navy) 8px, transparent 8px),
+    linear-gradient(0deg, transparent 6px, var(--navy) 6px, var(--navy) 8px, transparent 8px);
+}
+.group-photo-card .card-frame::before { top: 12px; left: 12px; }
+.group-photo-card .card-frame::after { top: 12px; right: 12px; }
+.group-photo-card:hover .card-frame::before,
+.group-photo-card:hover .card-frame::after { opacity: 0.5; }
+
+/* 合照底部十字绣 */
+.group-photo-card .card-corner-bottom {
+  position: absolute;
+  bottom: 12px; left: 12px;
+  width: 14px; height: 14px;
+  z-index: 5;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  background:
+    linear-gradient(90deg, transparent 6px, var(--navy) 6px, var(--navy) 8px, transparent 8px),
+    linear-gradient(0deg, transparent 6px, var(--navy) 6px, var(--navy) 8px, transparent 8px);
+}
+.group-photo-card .card-corner-bottom.right { left: auto; right: 12px; }
+.group-photo-card:hover .card-corner-bottom { opacity: 0.5; }
+
+@media (max-width: 900px) {
+  .group-photo-card .card-frame { width: 400px; height: 260px; }
+}
+@media (max-width: 640px) {
+  .group-photo-card .card-frame { width: 280px; height: 200px; }
+}
+
+/* ============================================
+   分隔装饰
+   ============================================ */
+.section-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 20px 0;
+  opacity: 0.5;
+}
+
+.section-divider .thread-ball {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--navy);
+  opacity: 0.4;
+}
+
+.section-divider .stitch-line {
+  width: 80px;
+  height: 1px;
+  background: repeating-linear-gradient(90deg, var(--navy) 0px, var(--navy) 5px, transparent 5px, transparent 10px);
+}
+
+/* ============================================
+   相册书本封面入口
+   ============================================ */
+.album-entry-section {
+  padding: 30px 20px 10px;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  gap: 36px;
+  flex-wrap: wrap;
+}
+
+.album-entry-card {
+  width: 300px;
+  min-height: 240px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 24px;
+  border: 3px solid rgba(26, 54, 93, 0.3);
+  border-radius: 12px;
+  cursor: pointer;
+  background: linear-gradient(135deg, #EDE5D8 0%, #F5F0E8 30%, #E8E0D3 70%, #DFD5C5 100%);
+  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  box-shadow:
+    0 4px 8px rgba(26,54,93,0.08),
+    0 8px 24px rgba(26,54,93,0.06),
+    0 16px 40px rgba(26,54,93,0.04),
+    inset 0 1px 0 rgba(255,255,255,0.4);
+  position: relative;
+  animation: fade-in-up 1s 1.4s both;
+  transform-style: preserve-3d;
+  perspective: 800px;
+}
+
+/* 书脊装饰线 */
+.album-entry-card::before {
+  content: '';
+  position: absolute;
+  left: 16px; top: 14px; bottom: 14px;
+  width: 3px;
+  background: linear-gradient(180deg,
+    rgba(26,54,93,0.08) 0%, rgba(26,54,93,0.15) 50%, rgba(26,54,93,0.08) 100%);
+  border-radius: 2px;
+}
+
+/* 封面针织纹理 */
+.album-entry-card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  border-radius: 9px;
+  background:
+    repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(26,54,93,0.015) 4px, rgba(26,54,93,0.015) 5px),
+    repeating-linear-gradient(90deg, transparent, transparent 4px, rgba(26,54,93,0.01) 4px, rgba(26,54,93,0.01) 5px);
+}
+
+.album-entry-card-inner {
+  transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  position: relative;
+  z-index: 1;
+}
+
+.album-entry-card:hover {
+  border-color: rgba(26, 54, 93, 0.55);
+  box-shadow:
+    0 6px 16px rgba(26,54,93,0.12),
+    0 12px 36px rgba(26,54,93,0.1),
+    0 20px 56px rgba(26,54,93,0.06),
+    inset 0 1px 0 rgba(255,255,255,0.5);
+}
+
+.album-entry-card:hover .album-entry-card-inner {
+  transform: translateY(-4px);
+}
+
+/* 封面光影扫过 */
+.album-entry-card .cover-shine {
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.3) 0%, transparent 60%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  z-index: 0;
+}
+.album-entry-card:hover .cover-shine {
+  opacity: 1;
+}
+
+.album-entry-icon {
+  font-size: 34px;
+  display: block;
+  margin-bottom: 6px;
+  filter: drop-shadow(0 2px 3px rgba(26,54,93,0.1));
+  transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.album-entry-card:hover .album-entry-icon {
+  transform: scale(1.08);
+}
+
+.album-entry-title {
+  font-size: 19px;
+  color: var(--navy);
+  letter-spacing: 8px;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.album-entry-sub {
+  font-size: 11px;
+  color: var(--gold);
+  letter-spacing: 5px;
+  margin-top: 4px;
+}
+
+/* 相册封面装饰线 */
+.album-entry-divider {
+  width: 60px;
+  height: 1px;
+  background: repeating-linear-gradient(90deg, var(--navy) 0px, var(--navy) 4px, transparent 4px, transparent 8px);
+  opacity: 0.3;
+  margin: 8px auto;
+}
+
+/* 相册封面底部提示 */
+.album-entry-hint {
+  font-size: 10px;
+  color: var(--text-light);
+  opacity: 0.5;
+  letter-spacing: 2px;
+  margin-top: 2px;
+}
+
+/* ============================================
+   书本相册弹窗
+   ============================================ */
+.book-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 9998;
+  background: rgba(20, 18, 15, 0.7);
+  perspective: 1500px;
+  overflow: hidden;
+}
+
+.book-overlay.active {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.book-overlay.closing {
+  pointer-events: none;
+}
+
+/* 书本主体 */
+.book-container {
+  position: relative;
+  width: 92vw;
+  max-width: 1050px;
+  height: 85vh;
+  max-height: 750px;
+  display: flex;
+  border-radius: 8px 14px 14px 8px;
+  box-shadow:
+    0 8px 32px rgba(0,0,0,0.25),
+    0 24px 72px rgba(0,0,0,0.15),
+    4px 4px 0 rgba(0,0,0,0.05);
+  transform-origin: center center;
+  animation: book-open 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  transform-style: preserve-3d;
+}
+
+.book-overlay.closing .book-container {
+  animation: book-close 0.5s cubic-bezier(0.55, 0.055, 0.675, 0.19) forwards;
+}
+
+@keyframes book-open {
+  0%   { transform: rotateY(-30deg) scale(0.6); opacity: 0; }
+  60%  { transform: rotateY(3deg) scale(1.02); opacity: 1; }
+  100% { transform: rotateY(0deg) scale(1); opacity: 1; }
+}
+
+@keyframes book-close {
+  0%   { transform: rotateY(0deg) scale(1); opacity: 1; }
+  100% { transform: rotateY(-20deg) scale(0.7); opacity: 0; }
+}
+
+/* 书脊 */
+.book-spine {
+  width: 22px;
+  background: linear-gradient(90deg, #C4B8A5 0%, #D5CCBB 40%, #B8A890 100%);
+  border-radius: 12px 0 0 12px;
+  position: relative;
+  flex-shrink: 0;
+}
+.book-spine::after {
+  content: '';
+  position: absolute;
+  top: 8%; left: 4px; right: 4px; bottom: 8%;
+  background: repeating-linear-gradient(180deg,
+    transparent, transparent 12px, rgba(0,0,0,0.04) 12px, rgba(0,0,0,0.04) 13px);
+  border-radius: 4px;
+}
+
+/* 左页 - 复古纸张 */
+.book-left-page {
+  flex: 1;
+  background: linear-gradient(135deg, #FBF7F0 0%, #F5EDDE 50%, #F0E8D8 100%);
+  border-left: 1px solid rgba(0,0,0,0.06);
+  padding: 30px 24px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+/* 右页 */
+.book-right-page {
+  flex: 1;
+  background: linear-gradient(225deg, #FBF7F0 0%, #F5EDDE 50%, #F0E8D8 100%);
+  border-left: 1px solid rgba(0,0,0,0.08);
+  padding: 30px 24px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+/* 书页中线阴影 */
+.book-left-page::after,
+.book-right-page::before {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 30px;
+  pointer-events: none;
+  z-index: 2;
+}
+.book-left-page::after {
+  right: 0;
+  background: linear-gradient(90deg, transparent, rgba(0,0,0,0.03));
+}
+.book-right-page::before {
+  left: 0;
+  background: linear-gradient(270deg, transparent, rgba(0,0,0,0.04));
+}
+
+/* 书页针线边框 */
+.book-left-page::before {
+  content: '';
+  position: absolute;
+  top: 14px; left: 14px; right: 14px; bottom: 14px;
+  border: 1px dashed rgba(26, 54, 93, 0.12);
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 页面标题 */
+.book-page-title {
+  font-size: 16px;
+  color: var(--navy);
+  letter-spacing: 5px;
+  text-align: center;
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed rgba(26,54,93,0.1);
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+}
+
+/* 页面网格 */
+.book-page-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  align-content: start;
+  overflow-y: auto;
+  padding: 4px;
+  position: relative;
+  z-index: 1;
+}
+
+/* 缩略图 */
+.book-thumb {
+  position: relative;
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid rgba(26,54,93,0.12);
+  cursor: pointer;
+  aspect-ratio: 4/3;
+  background: var(--cream-dark);
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  animation: thumb-fade-in 0.5s ease both;
+}
+
+.book-thumb:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 6px 18px rgba(26,54,93,0.15);
+}
+
+.book-thumb img,
+.book-thumb video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.book-thumb::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(26,54,93,0.015) 4px, rgba(26,54,93,0.015) 5px);
+  mix-blend-mode: multiply;
+}
+
+@keyframes thumb-fade-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* 视频缩略图图标 */
+.book-thumb-video-icon {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  z-index: 2;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: rgba(26,54,93,0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.book-thumb-video-icon::after {
+  content: '';
+  width: 0; height: 0;
+  border-left: 11px solid #fff;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  margin-left: 2px;
+}
+
+/* 空页面 */
+.book-empty {
+  grid-column: 1/-1;
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-light);
+  font-size: 14px;
+  letter-spacing: 3px;
+}
+
+/* ---- 布艺纽扣 ---- */
+.book-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border: 2px solid rgba(26,54,93,0.25);
+  border-radius: 20px;
+  background: linear-gradient(180deg, #FBF7F0 0%, #EDE5D8 100%);
+  color: var(--navy);
+  font-size: 12px;
+  letter-spacing: 3px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.25s ease;
+  outline: none;
+  position: relative;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+}
+.book-btn:hover {
+  border-color: rgba(26,54,93,0.5);
+  background: linear-gradient(180deg, #FFF 0%, #F0E8DA 100%);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+}
+.book-btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  transition: all 0.08s ease;
+}
+
+/* 纽扣缝线装饰 */
+.book-btn::after {
+  content: '';
+  position: absolute;
+  top: 4px; left: 50%;
+  transform: translateX(-50%);
+  width: 8px; height: 4px;
+  border-radius: 2px;
+  background: rgba(26,54,93,0.2);
+}
+
+/* 书本底栏 */
+.book-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(26,54,93,0.1);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.book-pagination {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.book-page-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: rgba(26,54,93,0.15);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.book-page-dot.active {
+  background: var(--navy);
+  box-shadow: 0 0 6px rgba(26,54,93,0.3);
+}
+
+.book-page-info {
+  font-size: 11px;
+  color: var(--text-light);
+  letter-spacing: 2px;
+}
+
+/* ---- 左右翻页箭头按钮 ---- */
+.book-page-turn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 2px dashed rgba(26, 54, 93, 0.3);
+  background: rgba(251, 247, 240, 0.85);
+  color: var(--navy);
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  outline: none;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 1px 8px rgba(26, 54, 93, 0.06);
+  opacity: 0.55;
+}
+.book-page-turn:hover {
+  opacity: 1;
+  border-color: rgba(26, 54, 93, 0.55);
+  box-shadow: 0 3px 16px rgba(26, 54, 93, 0.14);
+  transform: translateY(-50%) scale(1.08);
+}
+.book-page-turn:active {
+  transform: translateY(-50%) scale(0.92);
+  transition: all 0.08s ease;
+}
+.book-page-turn.prev {
+  left: 6px;
+}
+.book-page-turn.next {
+  right: 6px;
+}
+.book-page-turn:disabled {
+  opacity: 0.15;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* ---- 翻页过渡动画 ---- */
+.book-left-page.page-turning,
+.book-right-page.page-turning {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.book-left-page.page-turning-out {
+  opacity: 0.4;
+  transform: rotateY(-8deg);
+  transform-origin: right center;
+}
+.book-right-page.page-turning-out {
+  opacity: 0.4;
+  transform: rotateY(8deg);
+  transform-origin: left center;
+}
+
+/* ---- 页脚翻页按钮组 ---- */
+.book-footer-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.book-footer-nav .book-btn {
+  padding: 5px 12px;
+  font-size: 11px;
+  letter-spacing: 2px;
+}
+
+/* ---- 全屏浏览器（保留） ---- */
+.book-viewer {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 10002;
+  background: rgba(20,18,15,0.94);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.book-viewer.active { display: flex; }
+
+.book-viewer-content {
+  max-width: 90vw;
+  max-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.book-viewer-img {
+  max-width: 90vw; max-height: 80vh;
+  object-fit: contain;
+  border-radius: 4px;
+  border: 3px dashed rgba(255,255,255,0.2);
+  box-shadow: 0 8px 48px rgba(0,0,0,0.4);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.book-viewer-video {
+  max-width: 90vw; max-height: 80vh;
+  border-radius: 4px;
+  border: 3px dashed rgba(255,255,255,0.2);
+  box-shadow: 0 8px 48px rgba(0,0,0,0.4);
+}
+
+.book-viewer-nav {
+  position: absolute; top: 50%; transform: translateY(-50%); z-index: 10;
+  width: 42px; height: 42px; border-radius: 50%;
+  border: 2px dashed rgba(255,255,255,0.35);
+  background: rgba(0,0,0,0.25);
+  color: #fff; font-size: 22px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.3s ease;
+}
+.book-viewer-nav:hover { border-color: #fff; background: rgba(0,0,0,0.4); }
+.book-viewer-nav.prev { left: 20px; }
+.book-viewer-nav.next { right: 20px; }
+
+.book-viewer-close {
+  position: absolute; top: 20px; right: 28px; z-index: 10;
+}
+
+.book-viewer-counter {
+  position: absolute; top: 20px; left: 28px; z-index: 10;
+  color: rgba(255,255,255,0.6);
+  font-size: 12px; letter-spacing: 3px;
+}
+
+.book-viewer-content.fading .book-viewer-img,
+.book-viewer-content.fading .book-viewer-video {
+  opacity: 0; transform: scale(0.96);
+}
+
+/* 响应式 */
+@media (max-width: 900px) {
+  .book-container { flex-direction: column; width: 95vw; height: 90vh; max-height: none; }
+  .book-spine { width: 100%; height: 16px; border-radius: 12px 12px 0 0; }
+  .book-left-page, .book-right-page { padding: 18px 14px; }
+  .book-page-grid { grid-template-columns: repeat(2, 1fr); }
+  .book-page-turn { width: 32px; height: 32px; font-size: 16px; }
+  .book-page-turn.prev { left: 2px; }
+  .book-page-turn.next { right: 2px; }
+  .book-footer { flex-wrap: wrap; gap: 8px; }
+  .book-footer-nav { flex-wrap: wrap; }
+}
+@media (max-width: 640px) {
+  .book-container { width: 98vw; height: 92vh; }
+  .book-page-grid { grid-template-columns: 1fr; }
+  .book-left-page { padding: 14px 10px; }
+  .book-right-page { padding: 14px 10px; }
+  .book-btn { padding: 6px 12px; font-size: 10px; letter-spacing: 1px; }
+  .book-page-turn { width: 28px; height: 28px; font-size: 14px; }
+  .book-page-turn.prev { left: 0px; }
+  .book-page-turn.next { right: 0px; }
+  .book-footer { flex-direction: column; align-items: center; }
+}
+
+/* ============================================
+   宿舍介绍区
+   ============================================ */
+.about-section {
+  padding: 50px 20px 70px;
+  text-align: center;
+}
+
+.about-inner {
+  max-width: 650px;
+  margin: 0 auto;
+  padding: 50px 40px;
+  position: relative;
+  border: 2px dashed rgba(26, 54, 93, 0.2);
+  border-radius: 4px;
+  outline: 1px solid rgba(26, 54, 93, 0.08);
+  outline-offset: -10px;
+  animation: fade-in-up 1s 1.4s both;
+}
+
+/* 四角针线装饰 */
+.about-inner .corner-decor {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+}
+.about-inner .corner-decor::before,
+.about-inner .corner-decor::after {
+  content: '';
+  position: absolute;
+  background: var(--navy);
+  opacity: 0.3;
+}
+.about-inner .corner-decor::before {
+  width: 100%;
+  height: 2px;
+  top: 50%;
+  margin-top: -1px;
+}
+.about-inner .corner-decor::after {
+  height: 100%;
+  width: 2px;
+  left: 50%;
+  margin-left: -1px;
+}
+.about-inner .corner-decor.tl { top: 10px; left: 10px; }
+.about-inner .corner-decor.tr { top: 10px; right: 10px; }
+.about-inner .corner-decor.bl { bottom: 10px; left: 10px; }
+.about-inner .corner-decor.br { bottom: 10px; right: 10px; }
+
+.about-inner h3 {
+  font-size: 24px;
+  color: var(--navy);
+  letter-spacing: 8px;
+  margin-bottom: 30px;
+  font-weight: bold;
+}
+
+.about-inner .poem {
+  font-size: 16px;
+  color: var(--text);
+  line-height: 2.4;
+  letter-spacing: 3px;
+}
+
+.about-inner .poem .line {
+  display: block;
+}
+
+.about-inner .poem .line.emphasis {
+  font-size: 19px;
+  color: var(--navy);
+  font-weight: bold;
+  margin: 8px 0;
+  letter-spacing: 5px;
+}
+
+/* ============================================
+   底部信息区
+   ============================================ */
+.footer {
+  text-align: center;
+  padding: 50px 20px 40px;
+  border-top: 1px dashed rgba(26, 54, 93, 0.12);
+  margin-top: 30px;
+}
+
+.footer-info {
+  font-size: 13px;
+  color: var(--text-light);
+  letter-spacing: 5px;
+  line-height: 2.2;
+}
+
+.footer-info .highlight {
+  color: var(--navy);
+  font-weight: bold;
+}
+
+.footer-stitch {
+  width: 150px;
+  margin: 24px auto;
+}
+
+.footer-copy {
+  font-size: 11px;
+  color: var(--text-light);
+  opacity: 0.5;
+  letter-spacing: 2px;
+}
+
+/* ============================================
+   滚动布料晃动效果
+   ============================================ */
+.sway-element {
+  transition: transform 0.15s linear;
+}
+
+/* ============================================
+   响应式适配
+   ============================================ */
+@media (max-width: 1100px) {
+  .members-grid {
+    grid-template-columns: repeat(3, 250px);
+    gap: 24px 30px;
+  }
+  :root {
+    --card-width: 250px;
+    --card-height: 330px;
+  }
+  .album-entry-section { gap: 20px; }
+  .music-module { width: 280px; }
+  .album-entry-card { width: 280px; min-height: 220px; padding: 18px 20px; }
+  .vinyl-record { width: 100px; height: 100px; }
+  .album-entry-icon { font-size: 30px; }
+  .album-entry-title { font-size: 17px; letter-spacing: 6px; }
+}
+
+@media (max-width: 900px) {
+  .members-grid {
+    grid-template-columns: repeat(2, var(--card-width));
+    grid-template-rows: repeat(3, auto);
+  }
+  .header-title {
+    font-size: 36px;
+    letter-spacing: 8px;
+  }
+  .album-entry-section { gap: 20px; }
+  .music-module { width: 280px; }
+  .album-entry-card { width: 280px; min-height: 220px; padding: 18px 20px; }
+  .vinyl-record { width: 100px; height: 100px; }
+  .album-entry-icon { font-size: 30px; }
+  .album-entry-title { font-size: 17px; letter-spacing: 6px; }
+}
+
+@media (max-width: 640px) {
+  .members-grid {
+    grid-template-columns: repeat(1, var(--card-width));
+    grid-template-rows: repeat(6, auto);
+  }
+  .header-title {
+    font-size: 28px;
+    letter-spacing: 4px;
+  }
+  .page-wrapper {
+    padding: 0 16px;
+  }
+  #custom-cursor { display: none; }
+  html { cursor: auto; }
+  .album-entry-section { flex-direction: column; align-items: center; gap: 20px; }
+  .music-module { width: 92vw; max-width: 320px; }
+  .album-entry-card { width: 92vw; max-width: 320px; min-height: 180px; padding: 20px 16px; }
+  .vinyl-record { width: 100px; height: 100px; }
+  .music-playlist-list { max-height: 100px; }
+  .album-entry-icon { font-size: 28px; }
+  .album-entry-title { font-size: 16px; letter-spacing: 5px; }
+  .album-entry-title { font-size: 18px; letter-spacing: 6px; }
+}
+
+/* ============================================
+   全局入场动画
+   ============================================ */
+.animate-in {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+.animate-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ============================================
+   音乐模块 - 501宿舍歌单
+   ============================================ */
+
+/* ---- 音乐模块容器 ---- */
+.music-module {
+  width: 300px;
+  flex-shrink: 0;
+  border: 3px dashed rgba(26, 54, 93, 0.3);
+  border-radius: 12px;
+  background: linear-gradient(135deg, #EDE5D8 0%, #F5F0E8 30%, #E8E0D3 70%, #DFD5C5 100%);
+  box-shadow:
+    0 4px 8px rgba(26,54,93,0.08),
+    0 8px 24px rgba(26,54,93,0.06),
+    0 16px 40px rgba(26,54,93,0.04),
+    inset 0 1px 0 rgba(255,255,255,0.4);
+  position: relative;
+  animation: fade-in-up 1s 1.2s both;
+  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  overflow: hidden;
+}
+
+/* 针织纹理覆盖 */
+.music-module::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  border-radius: 9px;
+  z-index: 0;
+  background:
+    repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(26,54,93,0.015) 4px, rgba(26,54,93,0.015) 5px),
+    repeating-linear-gradient(90deg, transparent, transparent 4px, rgba(26,54,93,0.01) 4px, rgba(26,54,93,0.01) 5px);
+}
+
+/* 光影扫过 */
+.music-module .music-shine {
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.25) 0%, transparent 60%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  z-index: 0;
+}
+.music-module:hover .music-shine {
+  opacity: 1;
+}
+
+.music-module:hover {
+  border-color: rgba(26, 54, 93, 0.55);
+  box-shadow:
+    0 6px 16px rgba(26,54,93,0.12),
+    0 12px 36px rgba(26,54,93,0.1),
+    0 20px 56px rgba(26,54,93,0.06),
+    inset 0 1px 0 rgba(255,255,255,0.5);
+  transform: translateY(-4px);
+}
+
+.music-module-inner {
+  padding: 10px 14px 10px;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ---- 模块标题 ---- */
+.music-module-title {
+  font-size: 13px;
+  color: var(--navy);
+  letter-spacing: 4px;
+  font-weight: bold;
+  text-align: center;
+  position: relative;
+  padding-bottom: 4px;
+}
+.music-module-title::after {
+  content: '';
+  display: block;
+  width: 40px;
+  height: 1px;
+  background: repeating-linear-gradient(90deg, var(--navy) 0px, var(--navy) 5px, transparent 5px, transparent 10px);
+  margin: 5px auto 0;
+  opacity: 0.35;
+}
+
+/* ---- 黑胶唱片 ---- */
+.vinyl-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  position: relative;
+}
+
+.vinyl-record {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  position: relative;
+  background: radial-gradient(
+    circle at 50% 50%,
+    #1A1F35 0%,
+    #1A1F35 1%,
+    #252A45 1%,
+    #252A45 3%,
+    #1A1F35 3%,
+    #1A1F35 5%,
+    #2A3050 5%,
+    #2A3050 7%,
+    #1A1F35 7%,
+    #1A1F35 9%,
+    #252A45 9%,
+    #252A45 12%,
+    #1A1F35 12%,
+    #1A1F35 15%,
+    #2A3050 15%,
+    #2A3050 18%,
+    #1A1F35 18%,
+    #1A1F35 22%,
+    #252A45 22%,
+    #252A45 26%,
+    #1A1F35 26%,
+    #1A1F35 30%,
+    #2A3050 30%,
+    #2A3050 34%,
+    #1A1F35 34%,
+    #1A1F35 38%,
+    #252A45 38%,
+    #252A45 42%,
+    #1A1F35 42%,
+    #1A1F35 47%,
+    #2A3050 47%,
+    #2A3050 52%,
+    #1A1F35 52%,
+    #1A1F35 57%,
+    #252A45 57%,
+    #252A45 62%,
+    #1A1F35 62%,
+    #1A1F35 68%,
+    #2A3050 68%,
+    #2A3050 74%,
+    #1A1F35 74%,
+    #1A1F35 80%,
+    #252A45 80%,
+    #252A45 86%,
+    #1A1F35 86%,
+    #1A1F35 92%,
+    rgba(184, 151, 90, 0.25) 92%,
+    rgba(184, 151, 90, 0.4) 94%,
+    rgba(184, 151, 90, 0.15) 96%,
+    #1A1F35 97%,
+    #1A1F35 100%
+  );
+  box-shadow:
+    0 2px 8px rgba(0,0,0,0.2),
+    0 6px 24px rgba(0,0,0,0.15),
+    0 0 0 3px rgba(26,54,93,0.08),
+    0 0 0 6px rgba(184,151,90,0.12),
+    0 0 0 8px rgba(26,54,93,0.06);
+  animation: vinyl-spin 3s linear infinite;
+  animation-play-state: paused;
+  will-change: transform;
+  cursor: pointer;
+}
+
+/* 唱片外圈缝制针脚 */
+.vinyl-record::before {
+  content: '';
+  position: absolute;
+  top: -7px; left: -7px; right: -7px; bottom: -7px;
+  border-radius: 50%;
+  border: 1.5px dashed rgba(26, 54, 93, 0.25);
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes vinyl-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* 中心标签 */
+.vinyl-center {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 36%;
+  height: 36%;
+  border-radius: 50%;
+  background: var(--navy);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  box-shadow: 0 0 0 2px rgba(184,151,90,0.3), 0 0 0 4px rgba(26,54,93,0.2);
+}
+
+.vinyl-label-top,
+.vinyl-label-bot {
+  font-size: 9px;
+  color: var(--cream);
+  letter-spacing: 1px;
+  line-height: 1.2;
+  font-weight: bold;
+}
+
+.vinyl-label-divider {
+  width: 20px;
+  height: 1px;
+  background: var(--gold);
+  margin: 2px 0;
+  opacity: 0.7;
+}
+
+/* 中心主轴孔 */
+.vinyl-center::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cream-dark);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+}
+
+/* 唱片光泽 */
+.vinyl-shine {
+  position: absolute;
+  top: 6%; left: 15%; right: 25%; bottom: 40%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 40% 35%, rgba(255,255,255,0.18) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 3;
+  transform: rotate(-30deg);
+}
+
+/* ---- 磨砂玻璃控制面板 ---- */
+.music-controls {
+  width: 100%;
+  background: rgba(245, 240, 232, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 2px dashed rgba(26, 54, 93, 0.2);
+  border-radius: 10px;
+  padding: 8px 10px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+/* 歌曲信息 */
+.music-song-info {
+  text-align: center;
+  min-height: 16px;
+}
+
+.music-song-name {
+  font-size: 11px;
+  color: var(--navy);
+  letter-spacing: 1px;
+  font-weight: bold;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* 进度条 */
+.music-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.music-progress-track {
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(26, 54, 93, 0.1);
+  position: relative;
+  cursor: pointer;
+  overflow: visible;
+}
+
+.music-progress-fill {
+  position: absolute;
+  top: 0; left: 0;
+  height: 100%;
+  width: 0%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--navy), var(--navy-light));
+  transition: width 0.1s linear;
+  pointer-events: none;
+}
+
+.music-progress-thumb {
+  position: absolute;
+  top: 50%;
+  left: 0%;
+  transform: translate(-50%, -50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--navy);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 2;
+}
+.music-progress-track:hover .music-progress-thumb {
+  opacity: 1;
+}
+
+.music-time-display {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-light);
+  letter-spacing: 1px;
+}
+
+/* 控制按钮 */
+.music-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.music-btn-play {
+  width: 36px;
+  height: 36px;
+  border-radius: 50% !important;
+  padding: 0 !important;
+  font-size: 14px !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  border-color: rgba(26, 54, 93, 0.4) !important;
+  background: linear-gradient(180deg, #FFF 0%, #EDE5D8 100%) !important;
+  box-shadow: 0 2px 8px rgba(26,54,93,0.12) !important;
+}
+.music-btn-play:hover {
+  border-color: rgba(26, 54, 93, 0.65) !important;
+  box-shadow: 0 4px 16px rgba(26,54,93,0.2) !important;
+  transform: scale(1.06);
+}
+.music-btn-play:active {
+  transform: scale(0.92) !important;
+  transition: all 0.08s ease !important;
+}
+
+/* ---- 播放列表 ---- */
+.music-playlist {
+  width: 100%;
+  border: 2px dashed rgba(26, 54, 93, 0.15);
+  border-radius: 8px;
+  background: rgba(245, 240, 232, 0.4);
+  overflow: hidden;
+}
+
+.music-playlist-header {
+  font-size: 11px;
+  color: var(--gold);
+  letter-spacing: 4px;
+  padding: 8px 14px 4px;
+  text-align: center;
+  border-bottom: 1px dashed rgba(26, 54, 93, 0.08);
+}
+
+.music-playlist-list {
+  max-height: 90px;
+  overflow-y: auto;
+  padding: 2px 0;
+}
+
+/* 自定义滚动条 */
+.music-playlist-list::-webkit-scrollbar {
+  width: 4px;
+}
+.music-playlist-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.music-playlist-list::-webkit-scrollbar-thumb {
+  background: rgba(26, 54, 93, 0.15);
+  border-radius: 2px;
+}
+.music-playlist-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(26, 54, 93, 0.3);
+}
+
+.music-playlist-empty {
+  text-align: center;
+  padding: 20px;
+  font-size: 12px;
+  color: var(--text-light);
+  letter-spacing: 2px;
+  opacity: 0.6;
+}
+
+.music-playlist-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  border-bottom: 1px solid rgba(26, 54, 93, 0.04);
+  position: relative;
+}
+
+.music-playlist-item:hover {
+  background: rgba(26, 54, 93, 0.04);
+  box-shadow: inset 0 0 14px rgba(184, 151, 90, 0.06);
+}
+
+.music-playlist-item.active {
+  background: rgba(26, 54, 93, 0.06);
+  border-left: 3px solid var(--gold);
+  padding-left: 11px;
+}
+
+.music-playlist-item.active .music-playlist-name {
+  color: var(--navy);
+  font-weight: bold;
+}
+
+.music-playlist-index {
+  font-size: 10px;
+  color: var(--text-light);
+  opacity: 0.5;
+  width: 20px;
+  text-align: right;
+  flex-shrink: 0;
+  letter-spacing: 1px;
+}
+
+.music-playlist-item.active .music-playlist-index {
+  color: var(--gold);
+  opacity: 0.8;
+}
+
+.music-playlist-name {
+  flex: 1;
+  font-size: 12px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: 1px;
+}
+
+.music-playlist-dur {
+  font-size: 10px;
+  color: var(--text-light);
+  opacity: 0.6;
+  flex-shrink: 0;
+  letter-spacing: 1px;
+}
+
+/* ============================================
+   501飘屏留言墙 - 独立容器布局
+   ============================================ */
+
+/* 留言墙外框 */
+.message-wall-section {
+  padding: 10px 20px 50px;
+  text-align: center;
+}
+
+.message-wall-container {
+  max-width: 900px;
+  margin: 0 auto;
+  border: 3px dashed rgba(26, 54, 93, 0.25);
+  border-radius: 12px;
+  background: linear-gradient(135deg, #EDE5D8 0%, #F5F0E8 30%, #E8E0D3 70%, #DFD5C5 100%);
+  box-shadow: 0 4px 8px rgba(26,54,93,0.06), 0 8px 24px rgba(26,54,93,0.04);
+  overflow: hidden;
+  position: relative;
+}
+
+/* 针织纹理覆盖 */
+.message-wall-container::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  border-radius: 9px;
+  z-index: 0;
+  background:
+    repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(26,54,93,0.012) 4px, rgba(26,54,93,0.012) 5px),
+    repeating-linear-gradient(90deg, transparent, transparent 4px, rgba(26,54,93,0.008) 4px, rgba(26,54,93,0.008) 5px);
+}
+
+/* 飘屏区域 */
+.message-wall-float {
+  position: relative;
+  height: 220px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* 飘屏轨道 */
+.message-lane {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 60px;
+  pointer-events: none;
+}
+
+/* 留言气泡 */
+.message-bubble {
+  position: absolute;
+  top: 6px;
+  left: -200%;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 6px 7px;
+  background: linear-gradient(135deg, #FDFAF5 0%, #F5EDDE 100%);
+  border: 2px dashed rgba(26, 54, 93, 0.28);
+  border-radius: 20px;
+  box-shadow: 0 2px 12px rgba(26, 54, 93, 0.08), 0 0 0 1px rgba(26, 54, 93, 0.04);
+  white-space: nowrap;
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+  animation: drift-left var(--drift-dur, 10s) linear forwards;
+  animation-play-state: running;
+  overflow: visible;
+}
+
+/* 呼吸灯 */
+.message-bubble::before {
+  content: '';
+  position: absolute;
+  top: -3px; left: -3px; right: -3px; bottom: -3px;
+  border-radius: 22px;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0;
+  box-shadow: 0 0 18px rgba(184,151,90,0.3), 0 0 6px rgba(184,151,90,0.15);
+  transition: opacity 0.4s ease;
+}
+.message-bubble.playing::before {
+  opacity: 1;
+  animation: msg-breathe 1.5s ease-in-out infinite;
+}
+
+@keyframes msg-breathe {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+/* 针织纹理 */
+.message-bubble::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: 18px;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(26,54,93,0.012) 3px, rgba(26,54,93,0.012) 4px);
+}
+
+/* 飘屏动画 - 保证起终点都在容器外 */
+@keyframes drift-left {
+  from { left: -200%; }
+  to   { left: 200%; }
+}
+
+/* 气泡内元素 */
+.msg-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid rgba(26, 54, 93, 0.2);
+  object-fit: cover;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.msg-play-indicator {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--navy);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.msg-play-indicator.active {
+  opacity: 1;
+  animation: indicator-pulse 0.6s ease-in-out infinite;
+}
+@keyframes indicator-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+}
+
+.msg-nick {
+  font-size: 11px;
+  color: var(--navy);
+  font-weight: bold;
+  letter-spacing: 2px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.msg-play-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1.5px dashed rgba(26, 54, 93, 0.3);
+  background: rgba(245, 240, 232, 0.8);
+  color: var(--navy);
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 1;
+}
+.msg-play-btn:hover {
+  border-color: rgba(26, 54, 93, 0.6);
+  background: rgba(26, 54, 93, 0.06);
+}
+
+.msg-text {
+  font-size: 12px;
+  color: var(--text);
+  letter-spacing: 2px;
+  position: relative;
+  z-index: 1;
+}
+
+/* 删除按钮 */
+.msg-delete-btn {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(26, 54, 93, 0.1);
+  color: var(--navy);
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+.message-bubble:hover .msg-delete-btn {
+  opacity: 0.6;
+}
+.msg-delete-btn:hover {
+  opacity: 1 !important;
+  background: rgba(200, 60, 60, 0.15);
+  color: #c0392b;
+}
+
+/* ---- 声波动画 ---- */
+.msg-waveform {
+  display: none;
+  align-items: flex-end;
+  gap: 2px;
+  height: 20px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+.msg-waveform.active {
+  display: flex;
+}
+.msg-wave-bar {
+  width: 3px;
+  background: var(--navy);
+  border-radius: 2px;
+  animation: none;
+}
+.msg-waveform.active .msg-wave-bar {
+  animation: wave-jump 0.6s ease-in-out infinite;
+}
+.msg-waveform.active .msg-wave-bar:nth-child(1) { animation-delay: 0s; }
+.msg-waveform.active .msg-wave-bar:nth-child(2) { animation-delay: 0.12s; }
+.msg-waveform.active .msg-wave-bar:nth-child(3) { animation-delay: 0.24s; }
+.msg-waveform.active .msg-wave-bar:nth-child(4) { animation-delay: 0.36s; }
+.msg-waveform.active .msg-wave-bar:nth-child(5) { animation-delay: 0.48s; }
+
+@keyframes wave-jump {
+  0%, 100% { height: 6px; }
+  50% { height: 18px; }
+}
+
+/* ---- 控制台（容器内静态区域） ---- */
+.message-wall-console {
+  position: relative;
+  z-index: 1;
+  border-top: 2px dashed rgba(26, 54, 93, 0.2);
+  background: rgba(245,240,232,0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.console-title-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 20px;
+}
+.console-title-bar .console-title-icon {
+  font-size: 14px;
+}
+.console-title-bar .console-title-text {
+  font-size: 12px;
+  color: var(--navy);
+  letter-spacing: 5px;
+  font-weight: bold;
+}
+
+.console-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 16px 10px;
+  flex-wrap: wrap;
+}
+
+/* 输入框统一样式 */
+.console-inner input[type="text"] {
+  border: 2px dashed rgba(26, 54, 93, 0.2);
+  border-radius: 16px;
+  padding: 7px 14px;
+  background: rgba(253, 250, 245, 0.7);
+  color: var(--navy);
+  font-size: 12px;
+  letter-spacing: 2px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.25s ease;
+}
+.console-inner input[type="text"]:focus {
+  border-color: rgba(26, 54, 93, 0.45);
+}
+.console-inner input[type="text"]::placeholder {
+  color: var(--text-light);
+  opacity: 0.5;
+}
+
+.msg-nickname {
+  width: 90px;
+}
+.msg-text-input {
+  flex: 1;
+  min-width: 140px;
+  max-width: 300px;
+}
+
+/* 速度选择器 */
+.msg-speed-select,
+.msg-opacity-select {
+  border: 2px dashed rgba(26, 54, 93, 0.2);
+  border-radius: 14px;
+  padding: 6px 8px;
+  background: rgba(253, 250, 245, 0.7);
+  color: var(--navy);
+  font-size: 11px;
+  letter-spacing: 1px;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+}
+
+/* 头像选择器 */
+.avatar-selector {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.avatar-option {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid rgba(26, 54, 93, 0.15);
+  object-fit: cover;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+.avatar-option:hover {
+  border-color: rgba(26, 54, 93, 0.45);
+  transform: scale(1.12);
+}
+.avatar-option.selected {
+  border-color: var(--navy);
+  box-shadow: 0 0 0 2px rgba(26, 54, 93, 0.15);
+}
+.avatar-upload {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px dashed rgba(26, 54, 93, 0.2);
+  background: rgba(253, 250, 245, 0.5);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: var(--navy);
+  opacity: 0.5;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+.avatar-upload:hover {
+  border-color: rgba(26, 54, 93, 0.45);
+  opacity: 0.8;
+}
+
+/* 录音按钮状态 */
+.msg-record-btn.recording {
+  background: rgba(220, 60, 60, 0.1) !important;
+  border-color: rgba(220, 60, 60, 0.4) !important;
+  animation: record-pulse 0.8s ease-in-out infinite;
+}
+.msg-record-btn.recorded {
+  background: rgba(39, 174, 96, 0.1) !important;
+  border-color: rgba(39, 174, 96, 0.35) !important;
+  color: #27ae60 !important;
+}
+@keyframes record-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(220, 60, 60, 0.3); }
+  50% { box-shadow: 0 0 0 8px rgba(220, 60, 60, 0); }
+}
+
+/* 响应式 */
+/* 已发送留言列表 */
+.console-msg-list {
+  border-top: 1px dashed rgba(26, 54, 93, 0.1);
+  max-height: 100px;
+  overflow-y: auto;
+}
+.console-msg-list-header {
+  font-size: 10px;
+  color: var(--text-light);
+  letter-spacing: 3px;
+  padding: 8px 20px 4px;
+  text-align: center;
+  opacity: 0.6;
+}
+.console-msg-list-items {
+  padding: 4px 20px 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+.console-msg-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border: 1px dashed rgba(26,54,93,0.15);
+  border-radius: 14px;
+  font-size: 11px;
+  color: var(--navy);
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: rgba(253,250,245,0.5);
+  max-width: 200px;
+}
+.console-msg-item:hover {
+  border-color: rgba(26,54,93,0.4);
+  background: rgba(26,54,93,0.04);
+}
+.console-msg-item .cmi-avatar {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.console-msg-item .cmi-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.console-msg-item .cmi-del {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(200,60,60,0.1);
+  color: #c0392b;
+  font-size: 9px;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.console-msg-item:hover .cmi-del { opacity: 0.7; }
+.console-msg-item .cmi-del:hover { opacity: 1; background: rgba(200,60,60,0.25); }
+
+@media (max-width: 640px) {
+  .message-lane { height: 50px; }
+  .message-bubble { padding: 4px 8px 4px 5px; gap: 4px; }
+  .msg-avatar { width: 26px; height: 26px; }
+  .msg-nick { font-size: 9px; letter-spacing: 1px; }
+  .msg-text { font-size: 10px; }
+  .console-inner { gap: 5px; padding: 4px 8px 8px; }
+  .msg-nickname { width: 60px; }
+  .msg-text-input { max-width: 150px; }
+  .avatar-option, .avatar-upload { width: 24px; height: 24px; }
+  .console-msg-list { max-height: 70px; }
+  .console-msg-list-items { padding: 4px 8px 4px; }
+  .message-wall-float { height: 150px; }
+  .message-wall-container { border-width: 2px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================
+     加载动画
+     ============================================ -->
+<div id="loading-screen">
+  <div class="loading-thread">
+    <div class="loading-thread-fill"></div>
+  </div>
+  <div class="loading-text">针 线 编 织 中</div>
+</div>
+
+<!-- ============================================
+     自定义光标
+     ============================================ -->
+<div id="custom-cursor"></div>
+
+<!-- SVG 滤镜库 -->
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <filter id="stitch-filter">
+    <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" result="noise"/>
+    <feColorMatrix type="saturate" values="0" in="noise" result="gray"/>
+    <feComponentTransfer in="gray" result="faint">
+      <feFuncA type="linear" slope="0.05"/>
+    </feComponentTransfer>
+    <feBlend in="SourceGraphic" in2="faint" mode="multiply"/>
+  </filter>
+</svg>
+
+<div class="page-wrapper">
+
+  <!-- ============================================
+       顶部标题区
+       ============================================ -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="header-stitch-top stitch-line"></div>
+      <div class="header-subtitle">YANGZHOU POLYTECHNIC</div>
+      <h1 class="header-title">
+        501宿舍 <span class="dot"></span> 电气2301
+      </h1>
+      <div class="header-class">电气自动化技术专业</div>
+      <div class="header-school">扬州职业技术大学</div>
+      <div class="header-stitch-bottom stitch-line"></div>
+    </div>
+    <div class="scroll-hint" onclick="document.querySelector('.members-section').scrollIntoView({behavior:'smooth'})">
+      <span>向下滚动</span>
+      <div class="scroll-hint-arrow"></div>
+    </div>
+  </header>
+
+  <!-- ============================================
+       分隔装饰
+       ============================================ -->
+  <div class="section-divider">
+    <div class="thread-ball"></div>
+    <div class="stitch-line"></div>
+    <div class="thread-ball"></div>
+    <div class="stitch-line"></div>
+    <div class="thread-ball"></div>
+  </div>
+
+  <!-- ============================================
+       成员卡片展示区
+       ============================================ -->
+  <section class="members-section">
+    <div class="section-label">宿 舍 成 员</div>
+    <div class="members-grid" id="membersGrid">
+      <!-- JS 动态生成 -->
+    </div>
+  </section>
+
+  <!-- ============================================
+       集体合照（同样支持滑动显实交互）
+       ============================================ -->
+  <section class="group-photo-section">
+    <div class="group-photo-card" id="groupPhotoCard">
+      <div class="card-frame">
+        <img class="photo-real" src="images/group-real.jpg" alt="501宿舍集体合照" loading="lazy">
+        <img class="cartoon-layer" src="images/group-cartoon.jpg" alt="501宿舍集体合照卡通" loading="lazy">
+        <div class="texture-overlay"></div>
+        <div class="card-corner-bottom"></div>
+        <div class="card-corner-bottom right"></div>
+      </div>
+      <div class="card-name">501 宿舍集体合照</div>
+    </div>
+  </section>
+
+  <!-- ============================================
+       音乐模块 - 501宿舍歌单
+       ============================================ -->
+  <section class="album-entry-section">
+    <!-- 音乐模块 -->
+    <div class="music-module" id="musicModule">
+      <div class="music-shine"></div>
+      <div class="music-module-inner">
+        <!-- 模块标题 -->
+        <div class="music-module-title">501宿舍歌单</div>
+        <!-- 黑胶唱片 -->
+        <div class="vinyl-container">
+          <div class="vinyl-record" id="vinylRecord">
+            <div class="vinyl-center">
+              <span class="vinyl-label-top">501</span>
+              <span class="vinyl-label-divider"></span>
+              <span class="vinyl-label-bot">宿舍歌单</span>
+            </div>
+            <div class="vinyl-shine"></div>
+          </div>
+        </div>
+        <!-- 磨砂玻璃控制面板 -->
+        <div class="music-controls">
+          <div class="music-song-info">
+            <span class="music-song-name" id="musicSongName" title="未在播放">未在播放</span>
+          </div>
+          <div class="music-progress" id="musicProgress">
+            <div class="music-progress-track" id="musicProgressTrack">
+              <div class="music-progress-fill" id="musicProgressFill"></div>
+              <div class="music-progress-thumb" id="musicProgressThumb"></div>
+            </div>
+            <div class="music-time-display">
+              <span id="musicCurrentTime">00:00</span>
+              <span id="musicTotalTime">00:00</span>
+            </div>
+          </div>
+          <div class="music-buttons">
+            <button class="book-btn" id="musicBtnPrev" title="上一首" disabled>◀◀</button>
+            <button class="book-btn music-btn-play" id="musicBtnPlay" title="播放" disabled>▶</button>
+            <button class="book-btn" id="musicBtnNext" title="下一首" disabled>▶▶</button>
+            <button class="book-btn" id="musicBtnUpload" title="上传歌曲">＋ 上传音乐</button>
+          </div>
+        </div>
+        <!-- 播放列表 -->
+        <div class="music-playlist">
+          <div class="music-playlist-header">♫ 播放列表</div>
+          <div class="music-playlist-list" id="musicPlaylistList">
+            <div class="music-playlist-empty" id="musicPlaylistEmpty">点击下方按钮上传歌曲</div>
+          </div>
+        </div>
+      </div>
+      <input type="file" id="musicFileInput" multiple
+        accept="audio/mp3,audio/wav,audio/ogg,audio/flac,audio/mpeg,audio/aac,audio/x-m4a,audio/webm,audio/m4a"
+        style="display:none">
+    </div>
+
+    <!-- 相册书本封面入口 -->
+    <div class="album-entry-card" id="albumEntry">
+      <div class="cover-shine"></div>
+      <div class="album-entry-card-inner">
+        <span class="album-entry-icon">📷</span>
+        <div class="album-entry-title">501 日常相册</div>
+        <div class="album-entry-divider"></div>
+        <div class="album-entry-sub">记录宿舍生活点滴</div>
+        <div class="album-entry-hint">点击翻开相册</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================
+       书本相册弹窗
+       ============================================ -->
+  <div class="book-overlay" id="bookOverlay">
+    <div class="book-container" id="bookContainer">
+      <!-- 书脊 -->
+      <div class="book-spine"></div>
+      <!-- 左页 -->
+      <div class="book-left-page" id="bookLeftPage">
+        <button class="book-page-turn prev" id="bookPagePrev" title="上一页" disabled>◀</button>
+        <div class="book-page-title" id="bookLeftTitle">📷 照片</div>
+        <div class="book-page-grid" id="bookLeftGrid"></div>
+        <div class="book-footer">
+          <div class="book-footer-nav">
+            <button class="book-btn" id="bookFooterPrev">◀ 上一页</button>
+          </div>
+          <span class="book-page-info" id="bookLeftInfo"></span>
+        </div>
+      </div>
+      <!-- 右页 -->
+      <div class="book-right-page" id="bookRightPage">
+        <button class="book-page-turn next" id="bookPageNext" title="下一页">▶</button>
+        <div class="book-page-title" id="bookRightTitle">🎬 视频</div>
+        <div class="book-page-grid" id="bookRightGrid"></div>
+        <div class="book-footer">
+          <div class="book-pagination" id="bookPagination"></div>
+          <div class="book-footer-nav">
+            <button class="book-btn" id="bookFooterNext">下一页 ▶</button>
+            <button class="book-btn" id="bookUploadBtn">+ 上传</button>
+            <input type="file" id="albumFileInput" multiple accept="image/jpeg,image/png,video/mp4,image/gif,image/webp" style="display:none">
+            <button class="book-btn" id="bookBackBtn">← 合上相册</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- 全屏浏览器（和原来一致） -->
+    <div class="book-viewer" id="bookViewer">
+      <span class="book-viewer-counter" id="bookViewerCounter"></span>
+      <button class="book-btn book-viewer-close" id="bookViewerClose">✕ 关闭</button>
+      <button class="book-viewer-nav prev" id="bookViewerPrev">‹</button>
+      <button class="book-viewer-nav next" id="bookViewerNext">›</button>
+      <div class="book-viewer-content" id="bookViewerContent">
+        <img class="book-viewer-img" id="bookViewerImg" src="" alt="">
+        <video class="book-viewer-video" id="bookViewerVideo" muted autoplay controls playsinline></video>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================
+       分隔装饰
+       ============================================ -->
+  <div class="section-divider">
+    <div class="thread-ball"></div>
+    <div class="stitch-line"></div>
+    <div class="thread-ball"></div>
+  </div>
+
+  <!-- ============================================
+       宿舍介绍区
+       ============================================ -->
+  <section class="about-section">
+    <div class="section-label">关 于 我 们</div>
+    <div class="about-inner">
+      <div class="corner-decor tl"></div>
+      <div class="corner-decor tr"></div>
+      <div class="corner-decor bl"></div>
+      <div class="corner-decor br"></div>
+      <h3>五零一室 · 相聚同窗</h3>
+      <div class="poem">
+        <span class="line">扬州职业技术大学</span>
+        <span class="line emphasis">电气自动化2301班 501宿舍</span>
+        <span class="line" style="margin-top:16px;">六人相伴，朝夕共处</span>
+        <span class="line">深耕电气专业，并肩成长前行</span>
+        <span class="line">日常互帮互助，携手奔赴理想</span>
+        <span class="line emphasis">以少年热忱，共赴前路漫漫</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================
+       501飘屏留言墙
+       ============================================ -->
+  <section class="message-wall-section">
+    <div class="section-label">501 留言墙</div>
+    <div class="message-wall-container" id="messageWallContainer">
+      <!-- 飘屏区 -->
+      <div class="message-wall-float" id="messageWallFloat">
+        <!-- JS 动态生成轨道 -->
+      </div>
+      <!-- 控制台 -->
+      <div class="message-wall-console" id="messageWallConsole">
+        <div class="console-title-bar">
+          <span class="console-title-icon">💬</span>
+          <span class="console-title-text">发送留言</span>
+        </div>
+        <div class="console-inner">
+          <input type="text" class="msg-nickname" id="msgNickname" placeholder="昵称" maxlength="8">
+          <div class="avatar-selector" id="avatarSelector"></div>
+          <input type="text" class="msg-text-input" id="msgText" placeholder="说点什么..." maxlength="60">
+          <button class="book-btn msg-record-btn" id="msgRecordBtn" title="点击录制">🎤 点击录制</button>
+          <button class="book-btn msg-upload-btn" id="msgUploadBtn" title="上传音频">📁 上传</button>
+          <input type="file" id="msgAudioInput" accept="audio/mp3,audio/wav,audio/ogg,audio/mpeg,audio/webm" style="display:none">
+          <button class="book-btn msg-send-btn" id="msgSendBtn">发送</button>
+          <select class="msg-speed-select" id="msgSpeedSelect" title="飘屏速度">
+            <option value="6">快速</option>
+            <option value="10" selected>正常</option>
+            <option value="16">慢速</option>
+            <option value="24">极慢</option>
+          </select>
+          <select class="msg-opacity-select" id="msgOpacitySelect" title="气泡透明度">
+            <option value="1">不透明</option>
+            <option value="0.85" selected>微透</option>
+            <option value="0.65">半透</option>
+            <option value="0.45">轻透</option>
+          </select>
+        </div>
+        <!-- 已发送留言列表 -->
+        <div class="console-msg-list">
+          <div class="console-msg-list-header">📋 已发送留言（点击预览 / ✕ 删除）</div>
+          <div class="console-msg-list-items" id="consoleMsgItems"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <input type="file" id="msgAvatarInput" accept="image/*" style="display:none">
+
+  <!-- ============================================
+       底部信息区
+       ============================================ -->
+  <footer class="footer">
+    <div class="footer-stitch stitch-line"></div>
+    <div class="footer-info">
+      <div><span class="highlight">501 · 电气2301 · 我们的故事</span></div>
+      <div>扬州职业技术大学 · 电气与新能源学院</div>
+      <div>电气自动化技术专业 · 六人同行 · 电气筑梦</div>
+    </div>
+    <div class="footer-stitch stitch-line"></div>
+    <div class="footer-copy">© 501 Dormitory · Yangzhou Polytechnic · Est. 2023</div>
+  </footer>
+
+</div><!-- /page-wrapper -->
+
+<script>
+/* ============================================
+   成员数据配置
+     将6位成员的照片放入 images/ 文件夹：
+       cartoon1.jpg ~ cartoon6.jpg → 针织卡通插画
+       member1.jpg  ~ member6.jpg  → 真人实拍照片
+     ============================================ */
+const members = [
+  {
+    name: '范子越',
+    nickname: '寝室长',
+    cartoonUrl: 'images/cartoon1.jpg',
+    photoUrl: 'images/member1.jpg',
+  },
+  {
+    name: '姚明杨',
+    nickname: '学习担当',
+    cartoonUrl: 'images/cartoon2.jpg',
+    photoUrl: 'images/member2.jpg',
+  },
+  {
+    name: '郑威',
+    nickname: '技术达人',
+    cartoonUrl: 'images/cartoon3.jpg',
+    photoUrl: 'images/member3.jpg',
+  },
+  {
+    name: '张海翔',
+    nickname: '运动健将',
+    cartoonUrl: 'images/cartoon4.jpg',
+    photoUrl: 'images/member4.jpg',
+  },
+  {
+    name: '夏辉',
+    nickname: '文艺青年',
+    cartoonUrl: 'images/cartoon5.jpg',
+    photoUrl: 'images/member5.jpg',
+  },
+  {
+    name: '待加入',
+    nickname: '期待中',
+    cartoonUrl: 'images/cartoon6.jpg',
+    photoUrl: 'images/member6.jpg',
+  }
+];
+
+/* ============================================
+   构建成员卡片 HTML
+   ============================================ */
+/* ============================================
+   构建成员卡片 HTML
+   ============================================ */
+function buildMemberCards() {
+  const grid = document.getElementById('membersGrid');
+  members.forEach((member, i) => {
+    const card = document.createElement('div');
+    card.className = 'member-card';
+    card.setAttribute('data-index', i);
+    card.innerHTML = `
+      <div class="card-frame">
+            <img class="photo-real" src="${member.photoUrl}" alt="${member.name}" loading="lazy">
+            <img class="cartoon-layer" src="${member.cartoonUrl}" alt="${member.name}卡通" loading="lazy">
+        <div class="texture-overlay"></div>
+        <div class="card-corner-bottom"></div>
+        <div class="card-corner-bottom right"></div>
+      </div>
+      <div class="card-name">${member.name}</div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+/* ============================================
+   书本相册系统
+   ============================================ */
+
+const ITEMS_PER_PAGE = 8; // 每页8张(左4+右4)
+
+const albumData = [
+  { type: 'photo', url: 'images/gallery1.jpg', caption: '宿舍集体合照' },
+  { type: 'photo', url: 'images/gallery2.jpg', caption: '日常学习' },
+  { type: 'photo', url: 'images/gallery3.jpg', caption: '课余时光' },
+  { type: 'photo', url: 'images/gallery4.jpg', caption: '宿舍聚餐' },
+  { type: 'photo', url: 'images/gallery5.jpg', caption: '宿舍集体合照' },
+];
+
+/* ============================================
+   音乐模块 - 播放列表状态
+   ============================================ */
+const musicPlaylist = [];       // { name, url, duration }
+let musicCurrentIndex = -1;
+let musicIsPlaying = false;
+let musicProgressDragging = false;
+
+// ---- IndexedDB 音乐持久化 ----
+const MUSIC_DB_NAME = 'Dorm501Music';
+const MUSIC_DB_VERSION = 1;
+
+function openMusicDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(MUSIC_DB_NAME, MUSIC_DB_VERSION);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('songs')) {
+        db.createObjectStore('songs', { keyPath: 'id' });
+      }
+    };
+    req.onsuccess = (e) => resolve(e.target.result);
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+async function saveSongToDB(song) {
+  try {
+    const db = await openMusicDB();
+    const tx = db.transaction('songs', 'readwrite');
+    tx.objectStore('songs').put(song);
+    await new Promise(r => { tx.oncomplete = r; });
+    // 同步保存元数据到 localStorage
+    saveMusicMeta();
+  } catch(e) { console.warn('音乐保存失败:', e); }
+}
+
+async function loadSongsFromDB() {
+  try {
+    const db = await openMusicDB();
+    const tx = db.transaction('songs', 'readonly');
+    const songs = await new Promise(r => {
+      const req = tx.objectStore('songs').getAll();
+      req.onsuccess = () => r(req.result);
+    });
+    return songs;
+  } catch(e) { return []; }
+}
+
+async function deleteSongFromDB(id) {
+  try {
+    const db = await openMusicDB();
+    const tx = db.transaction('songs', 'readwrite');
+    tx.objectStore('songs').delete(id);
+    await new Promise(r => { tx.oncomplete = r; });
+    saveMusicMeta();
+  } catch(e) {}
+}
+
+function saveMusicMeta() {
+  try {
+    const meta = musicPlaylist.map(s => ({ id: s.id, name: s.name, duration: s.duration }));
+    localStorage.setItem('musicPlaylistMeta', JSON.stringify(meta));
+  } catch(e) {}
+}
+
+async function loadMusicFromStorage() {
+  // 先从 localStorage 加载元数据（快速显示列表）
+  const metaStr = localStorage.getItem('musicPlaylistMeta');
+  const meta = metaStr ? JSON.parse(metaStr) : [];
+
+  // 从 IndexedDB 加载实际音频文件
+  const songs = await loadSongsFromDB();
+  const songMap = {};
+  songs.forEach(s => { songMap[s.id] = s; });
+
+  meta.forEach(m => {
+    const saved = songMap[m.id];
+    if (saved && saved.blob) {
+      musicPlaylist.push({
+        id: m.id,
+        name: m.name,
+        url: URL.createObjectURL(saved.blob),
+        duration: m.duration
+      });
+    } else {
+      // 元数据存在但 blob 丢失（可能是其他设备）
+      musicPlaylist.push({
+        id: m.id,
+        name: m.name + ' (无文件)',
+        url: '',
+        duration: m.duration
+      });
+    }
+  });
+
+  if (musicPlaylist.length > 0) {
+    renderMusicPlaylist();
+    updateMusicButtonStates();
+    // 加载第一首但不自动播放
+    loadMusicTrack(0);
+    // 暂停（只是加载，不播放）
+    const audio = getMusicAudio();
+    if (audio) { audio.pause(); musicIsPlaying = false; }
+  }
+}
+
+let bookCurrentPage = 0;
+let totalPages = 1;
+
+// ---- 翻页音效 ----
+function playPageSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(200, ctx.currentTime);
+    osc.frequency.linearRampToValueAtTime(80, ctx.currentTime + 0.12);
+    gain.gain.setValueAtTime(0.04, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.15);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.15);
+  } catch(e) { /* 静默降级 */ }
+}
+
+// ---- 时间格式化 ----
+function formatMusicTime(seconds) {
+  if (!isFinite(seconds) || seconds < 0) return '--:--';
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+}
+
+// ---- 渲染书本页面 ----
+function renderBookPages(direction) {
+  totalPages = Math.max(1, Math.ceil(albumData.length / ITEMS_PER_PAGE));
+  if (bookCurrentPage >= totalPages) bookCurrentPage = totalPages - 1;
+  if (bookCurrentPage < 0) bookCurrentPage = 0;
+
+  const leftPage = document.getElementById('bookLeftPage');
+  const rightPage = document.getElementById('bookRightPage');
+  const leftGrid = document.getElementById('bookLeftGrid');
+  const rightGrid = document.getElementById('bookRightGrid');
+  const leftTitle = document.getElementById('bookLeftTitle');
+  const rightTitle = document.getElementById('bookRightTitle');
+  const leftInfo = document.getElementById('bookLeftInfo');
+  const pagination = document.getElementById('bookPagination');
+  const pagePrev = document.getElementById('bookPagePrev');
+  const pageNext = document.getElementById('bookPageNext');
+  const footerPrev = document.getElementById('bookFooterPrev');
+  const footerNext = document.getElementById('bookFooterNext');
+
+  // 翻页过渡动画
+  if (direction) {
+    leftPage.classList.add('page-turning', direction === 'next' ? 'page-turning-out' : '');
+    rightPage.classList.add('page-turning', direction === 'next' ? 'page-turning-out' : '');
+    setTimeout(() => {
+      leftPage.classList.remove('page-turning', 'page-turning-out');
+      rightPage.classList.remove('page-turning', 'page-turning-out');
+    }, 220);
+  }
+
+  leftGrid.innerHTML = '';
+  rightGrid.innerHTML = '';
+
+  const start = bookCurrentPage * ITEMS_PER_PAGE;
+  const end = Math.min(start + ITEMS_PER_PAGE, albumData.length);
+  const pageItems = albumData.slice(start, end);
+
+  if (pageItems.length === 0) {
+    leftGrid.innerHTML = '<div class="book-empty">这一页还是空的<br>点击「+ 上传」添加回忆</div>';
+    rightGrid.innerHTML = '';
+    leftTitle.textContent = '📷 空空如也';
+    rightTitle.textContent = '';
+    leftInfo.textContent = '';
+  } else {
+    const half = Math.ceil(pageItems.length / 2);
+    const leftItems = pageItems.slice(0, half);
+    const rightItems = pageItems.slice(half);
+
+    leftTitle.textContent = '📷 记忆左页';
+    rightTitle.textContent = '📷 记忆右页';
+    leftInfo.textContent = `第 ${bookCurrentPage + 1} / ${totalPages} 页`;
+
+    leftItems.forEach((item, i) => {
+      const thumb = buildBookThumb(item, start + i);
+      leftGrid.appendChild(thumb);
+    });
+    rightItems.forEach((item, i) => {
+      const thumb = buildBookThumb(item, start + half + i);
+      rightGrid.appendChild(thumb);
+    });
+  }
+
+  // 翻页箭头按钮状态
+  if (pagePrev) pagePrev.disabled = bookCurrentPage <= 0;
+  if (pageNext) pageNext.disabled = bookCurrentPage >= totalPages - 1;
+  if (footerPrev) footerPrev.disabled = bookCurrentPage <= 0;
+  if (footerNext) footerNext.disabled = bookCurrentPage >= totalPages - 1;
+
+  // 翻页圆点
+  pagination.innerHTML = '';
+  for (let p = 0; p < totalPages; p++) {
+    const dot = document.createElement('div');
+    dot.className = 'book-page-dot' + (p === bookCurrentPage ? ' active' : '');
+    dot.addEventListener('click', () => {
+      if (p !== bookCurrentPage) {
+        const dir = p > bookCurrentPage ? 'next' : 'prev';
+        bookCurrentPage = p;
+        playPageSound();
+        renderBookPages(dir);
+      }
+    });
+    pagination.appendChild(dot);
+  }
+}
+
+function buildBookThumb(item, index) {
+  const thumb = document.createElement('div');
+  thumb.className = 'book-thumb';
+  thumb.style.animationDelay = (index % ITEMS_PER_PAGE) * 0.06 + 's';
+  if (item.type === 'video') {
+    thumb.innerHTML = `
+      <img src="${item.url + '#t=0.1'}" alt="${item.caption}" loading="lazy"
+        onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22><rect fill=%22%23E8E0D3%22 width=%22400%22 height=%22300%22/><text x=%22200%22 y=%22155%22 text-anchor=%22middle%22 fill=%22%231A365D%22 font-size=%2214%22>🎬 视频</text></svg>'">
+      <div class="book-thumb-video-icon"></div>
+    `;
+  } else {
+    thumb.innerHTML = `<img src="${item.url}" alt="${item.caption}" loading="lazy">`;
+  }
+  thumb.addEventListener('click', (e) => { e.stopPropagation(); openBookViewer(index); });
+  return thumb;
+}
+
+// ---- 书本打开/关闭 ----
+function openBook() {
+  const overlay = document.getElementById('bookOverlay');
+  const container = document.getElementById('bookContainer');
+  overlay.classList.remove('closing');
+  overlay.classList.add('active');
+  container.style.display = ''; // 确保书本可见
+  document.body.style.overflow = 'hidden';
+  document.getElementById('custom-cursor').style.display = 'none';
+  bookCurrentPage = 0;
+  renderBookPages();
+  playPageSound();
+}
+
+function closeBook() {
+  const overlay = document.getElementById('bookOverlay');
+  const viewer = document.getElementById('bookViewer');
+  // 先关闭预览
+  if (viewer.classList.contains('active')) {
+    closeBookViewer();
+  }
+  overlay.classList.add('closing');
+  setTimeout(() => {
+    overlay.classList.remove('active', 'closing');
+    document.getElementById('bookContainer').style.display = '';
+    document.body.style.overflow = '';
+    document.getElementById('custom-cursor').style.display = '';
+  }, 500);
+  playPageSound();
+}
+
+// ---- 全屏浏览器 ----
+let bookViewerIndex = 0;
+let viewerSwipeStart = 0, viewerSwipeDelta = 0;
+
+function openBookViewer(index) {
+  bookViewerIndex = index;
+  // 只隐藏书本内页，保留 overlay 层级和背景
+  document.getElementById('bookContainer').style.display = 'none';
+  document.getElementById('bookViewer').classList.add('active');
+  loadBookViewerItem();
+}
+
+function closeBookViewer() {
+  const v = document.getElementById('bookViewer');
+  const vid = document.getElementById('bookViewerVideo');
+  vid.pause();
+  vid.src = '';
+  v.classList.remove('active');
+  // 恢复书本内页显示
+  document.getElementById('bookContainer').style.display = '';
+}
+
+function loadBookViewerItem() {
+  const item = albumData[bookViewerIndex];
+  if (!item) return;
+  const content = document.getElementById('bookViewerContent');
+  const img = document.getElementById('bookViewerImg');
+  const video = document.getElementById('bookViewerVideo');
+  const counter = document.getElementById('bookViewerCounter');
+
+  content.classList.add('fading');
+  setTimeout(() => {
+    if (item.type === 'video') {
+      img.style.display = 'none';
+      video.style.display = 'block';
+      video.src = item.url;
+      video.play().catch(() => {});
+    } else {
+      video.style.display = 'none'; video.pause(); video.src = '';
+      img.style.display = 'block'; img.src = item.url; img.alt = item.caption;
+    }
+    counter.textContent = (bookViewerIndex + 1) + ' / ' + albumData.length;
+    content.classList.remove('fading');
+  }, 180);
+}
+
+function bookViewerPrev() {
+  if (!albumData.length) return;
+  bookViewerIndex = (bookViewerIndex - 1 + albumData.length) % albumData.length;
+  loadBookViewerItem();
+}
+function bookViewerNext() {
+  if (!albumData.length) return;
+  bookViewerIndex = (bookViewerIndex + 1) % albumData.length;
+  loadBookViewerItem();
+}
+
+function initBookViewer() {
+  document.getElementById('bookViewerClose').addEventListener('click', (e) => { e.stopPropagation(); closeBookViewer(); });
+  document.getElementById('bookViewerPrev').addEventListener('click', (e) => { e.stopPropagation(); bookViewerPrev(); });
+  document.getElementById('bookViewerNext').addEventListener('click', (e) => { e.stopPropagation(); bookViewerNext(); });
+
+  // 键盘：Esc 关预览 / 方向键切换
+  document.addEventListener('keydown', function(e) {
+    const v = document.getElementById('bookViewer');
+    const overlay = document.getElementById('bookOverlay');
+    if (!overlay.classList.contains('active')) return;
+    if (v.classList.contains('active')) {
+      if (e.key === 'Escape') { e.preventDefault(); closeBookViewer(); }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); bookViewerPrev(); }
+      if (e.key === 'ArrowRight') { e.preventDefault(); bookViewerNext(); }
+      return;
+    }
+    if (e.key === 'Escape') { e.preventDefault(); closeBook(); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); bookPagePrev(); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); bookPageNext(); }
+  });
+
+  const content = document.getElementById('bookViewerContent');
+  content.addEventListener('touchstart', e => { viewerSwipeStart = e.touches[0].clientX; viewerSwipeDelta = 0; });
+  content.addEventListener('touchmove', e => { viewerSwipeDelta = e.touches[0].clientX - viewerSwipeStart; });
+  content.addEventListener('touchend', () => {
+    if (viewerSwipeDelta < -60) bookViewerNext();
+    else if (viewerSwipeDelta > 60) bookViewerPrev();
+    viewerSwipeDelta = 0;
+  });
+
+  let md = false, msx = 0;
+  content.addEventListener('mousedown', e => { md = true; msx = e.clientX; });
+  window.addEventListener('mouseup', () => {
+    if (!md) return;
+    if (!document.getElementById('bookViewer').classList.contains('active')) { md = false; return; }
+    if (viewerSwipeDelta < -60) bookViewerNext();
+    else if (viewerSwipeDelta > 60) bookViewerPrev();
+    md = false; viewerSwipeDelta = 0;
+  });
+  window.addEventListener('mousemove', e => { if (md) viewerSwipeDelta = e.clientX - msx; });
+}
+
+// ---- 翻页（左/右按钮翻页） ----
+function bookPagePrev() {
+  if (bookCurrentPage > 0) { bookCurrentPage--; playPageSound(); renderBookPages('prev'); }
+}
+function bookPageNext() {
+  if (bookCurrentPage < totalPages - 1) { bookCurrentPage++; playPageSound(); renderBookPages('next'); }
+}
+
+// ---- 上传 ----
+function initAlbumUpload() {
+  const fileInput = document.getElementById('albumFileInput');
+  document.getElementById('bookUploadBtn').addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', function() {
+    const files = Array.from(this.files);
+    if (!files.length) return;
+    files.forEach(file => {
+      albumData.push({
+        type: file.type.startsWith('video/') ? 'video' : 'photo',
+        url: URL.createObjectURL(file),
+        caption: file.name.replace(/\.[^/.]+$/, ''),
+      });
+    });
+    // 自动跳到最后一页展示新上传内容
+    totalPages = Math.max(1, Math.ceil(albumData.length / ITEMS_PER_PAGE));
+    bookCurrentPage = totalPages - 1;
+    renderBookPages();
+    fileInput.value = '';
+  });
+}
+
+/* ============================================
+   音乐模块 - 播放器功能
+   ============================================ */
+
+// 获取 audio 元素引用
+function getMusicAudio() {
+  return document.getElementById('musicAudio');
+}
+
+// 控制黑胶唱片旋转
+function setVinylSpinning(spinning) {
+  const record = document.getElementById('vinylRecord');
+  if (record) {
+    record.style.animationPlayState = spinning ? 'running' : 'paused';
+  }
+}
+
+// 更新播放按钮状态
+function updateMusicButtonStates() {
+  const hasTracks = musicPlaylist.length > 0;
+  document.getElementById('musicBtnPlay').disabled = !hasTracks;
+  document.getElementById('musicBtnPrev').disabled = !hasTracks;
+  document.getElementById('musicBtnNext').disabled = !hasTracks;
+  if (!hasTracks) {
+    document.getElementById('musicBtnPlay').style.opacity = '0.4';
+    document.getElementById('musicBtnPrev').style.opacity = '0.4';
+    document.getElementById('musicBtnNext').style.opacity = '0.4';
+  } else {
+    document.getElementById('musicBtnPlay').style.opacity = '';
+    document.getElementById('musicBtnPrev').style.opacity = '';
+    document.getElementById('musicBtnNext').style.opacity = '';
+  }
+}
+
+// 加载指定曲目
+function loadMusicTrack(index) {
+  const audio = getMusicAudio();
+  if (!audio || index < 0 || index >= musicPlaylist.length) return;
+
+  musicCurrentIndex = index;
+  const track = musicPlaylist[index];
+
+  musicIsPlaying = false;
+  audio.pause();
+  audio.src = track.url;
+  audio.load();
+
+  document.getElementById('musicSongName').textContent = track.name;
+  document.getElementById('musicSongName').title = track.name;
+  document.getElementById('musicTotalTime').textContent = formatMusicTime(track.duration);
+  document.getElementById('musicCurrentTime').textContent = '00:00';
+  document.getElementById('musicProgressFill').style.width = '0%';
+  document.getElementById('musicProgressThumb').style.left = '0%';
+  document.getElementById('musicBtnPlay').innerHTML = '▶';
+  setVinylSpinning(false);
+  renderMusicPlaylist();
+}
+
+// 播放/暂停切换
+function toggleMusicPlay() {
+  const audio = getMusicAudio();
+  if (!audio || musicPlaylist.length === 0) return;
+
+  if (musicCurrentIndex < 0) {
+    loadMusicTrack(0);
+  }
+
+  if (musicIsPlaying) {
+    audio.pause();
+  } else {
+    audio.play().catch(err => {
+      console.warn('音频播放被阻止:', err);
+    });
+  }
+}
+
+// 上一首
+function musicPrev() {
+  if (musicPlaylist.length === 0) return;
+  const prev = (musicCurrentIndex - 1 + musicPlaylist.length) % musicPlaylist.length;
+  loadMusicTrack(prev);
+  const audio = getMusicAudio();
+  audio.play().then(() => {}).catch(() => {});
+}
+
+// 下一首
+function musicNext() {
+  if (musicPlaylist.length === 0) return;
+  const next = (musicCurrentIndex + 1) % musicPlaylist.length;
+  loadMusicTrack(next);
+  const audio = getMusicAudio();
+  audio.play().then(() => {}).catch(() => {});
+}
+
+// 渲染播放列表
+function renderMusicPlaylist() {
+  const list = document.getElementById('musicPlaylistList');
+  if (!list) return;
+  list.innerHTML = '';
+
+  if (musicPlaylist.length === 0) {
+    list.innerHTML = '<div class="music-playlist-empty">点击"＋ 上传音乐"添加歌曲</div>';
+    return;
+  }
+
+  musicPlaylist.forEach((track, i) => {
+    const item = document.createElement('div');
+    item.className = 'music-playlist-item';
+    if (i === musicCurrentIndex) item.classList.add('active');
+    item.innerHTML = `
+      <span class="music-playlist-index">${String(i + 1).padStart(2, '0')}</span>
+      <span class="music-playlist-name">${track.name}</span>
+      <span class="music-playlist-dur">${formatMusicTime(track.duration)}</span>
+    `;
+    item.addEventListener('click', () => {
+      if (i === musicCurrentIndex) {
+        toggleMusicPlay();
+      } else {
+        loadMusicTrack(i);
+        const audio = getMusicAudio();
+        audio.play().then(() => {}).catch(() => {});
+      }
+    });
+    list.appendChild(item);
+  });
+}
+
+// 根据事件位置跳转进度
+function seekMusicByEvent(e) {
+  const audio = getMusicAudio();
+  if (!audio || musicPlaylist.length === 0) return;
+  if (!isFinite(audio.duration) || audio.duration <= 0) return;
+
+  const track = document.getElementById('musicProgressTrack');
+  const rect = track.getBoundingClientRect();
+  const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+  const ratio = x / rect.width;
+  audio.currentTime = ratio * audio.duration;
+  updateMusicProgressDisplay(ratio * audio.duration);
+}
+
+// 更新进度条显示
+function updateMusicProgressDisplay(currentTimeOverride) {
+  const audio = getMusicAudio();
+  const ct = currentTimeOverride !== undefined ? currentTimeOverride : (audio ? audio.currentTime : 0);
+  const dur = audio ? audio.duration : 0;
+  if (!isFinite(dur) || dur <= 0) return;
+
+  const pct = (ct / dur * 100).toFixed(2) + '%';
+  document.getElementById('musicProgressFill').style.width = pct;
+  document.getElementById('musicProgressThumb').style.left = pct;
+  document.getElementById('musicCurrentTime').textContent = formatMusicTime(ct);
+}
+
+// 上传处理
+function initMusicUpload() {
+  const fileInput = document.getElementById('musicFileInput');
+
+  // 上传按钮
+  document.getElementById('musicBtnUpload').addEventListener('click', () => {
+    fileInput.click();
+  });
+
+  // 空播放列表点击上传
+  document.getElementById('musicPlaylistList').addEventListener('click', function(e) {
+    if (e.target.closest('.music-playlist-empty')) {
+      fileInput.click();
+    }
+  });
+
+  fileInput.addEventListener('change', function() {
+    const files = Array.from(this.files);
+    if (!files.length) return;
+
+    files.forEach(file => {
+      const url = URL.createObjectURL(file);
+      const name = file.name.replace(/\.[^/.]+$/, '');
+
+      const tempAudio = new Audio();
+      tempAudio.preload = 'metadata';
+      tempAudio.src = url;
+      tempAudio.addEventListener('loadedmetadata', () => {
+        musicPlaylist.push({
+          name: name,
+          url: url,
+          duration: tempAudio.duration
+        });
+        renderMusicPlaylist();
+        updateMusicButtonStates();
+        if (musicPlaylist.length === 1) {
+          loadMusicTrack(0);
+        }
+      });
+      tempAudio.addEventListener('error', () => {
+        musicPlaylist.push({
+          name: name,
+          url: url,
+          duration: 0
+        });
+        renderMusicPlaylist();
+        updateMusicButtonStates();
+        if (musicPlaylist.length === 1) {
+          loadMusicTrack(0);
+        }
+      });
+    });
+
+    fileInput.value = '';
+  });
+}
+
+// 绑定 audio 事件
+function bindMusicAudioEvents() {
+  const audio = getMusicAudio();
+  if (!audio) return;
+
+  audio.addEventListener('loadedmetadata', () => {
+    if (musicCurrentIndex >= 0 && musicCurrentIndex < musicPlaylist.length) {
+      musicPlaylist[musicCurrentIndex].duration = audio.duration;
+      document.getElementById('musicTotalTime').textContent = formatMusicTime(audio.duration);
+      renderMusicPlaylist();
+    }
+  });
+
+  audio.addEventListener('timeupdate', () => {
+    if (!musicProgressDragging) {
+      updateMusicProgressDisplay();
+    }
+  });
+
+  audio.addEventListener('play', () => {
+    musicIsPlaying = true;
+    document.getElementById('musicBtnPlay').innerHTML = '⏸';
+    setVinylSpinning(true);
+  });
+
+  audio.addEventListener('pause', () => {
+    musicIsPlaying = false;
+    document.getElementById('musicBtnPlay').innerHTML = '▶';
+    setVinylSpinning(false);
+  });
+
+  audio.addEventListener('ended', () => {
+    if (musicPlaylist.length > 0) {
+      musicNext();
+    } else {
+      musicIsPlaying = false;
+      setVinylSpinning(false);
+      document.getElementById('musicBtnPlay').innerHTML = '▶';
+    }
+  });
+
+  audio.addEventListener('error', () => {
+    console.warn('音频播放错误:', audio.error);
+    if (musicPlaylist.length > 1) {
+      musicPlaylist.splice(musicCurrentIndex, 1);
+      renderMusicPlaylist();
+      updateMusicButtonStates();
+      if (musicPlaylist.length > 0) {
+        const newIndex = Math.min(musicCurrentIndex, musicPlaylist.length - 1);
+        loadMusicTrack(newIndex);
+        getMusicAudio().play().then(() => {}).catch(() => {});
+      } else {
+        musicCurrentIndex = -1;
+        document.getElementById('musicSongName').textContent = '未在播放';
+      }
+    } else if (musicPlaylist.length === 1) {
+      musicPlaylist.length = 0;
+      musicCurrentIndex = -1;
+      renderMusicPlaylist();
+      updateMusicButtonStates();
+      document.getElementById('musicSongName').textContent = '未在播放';
+      document.getElementById('musicTotalTime').textContent = '00:00';
+      document.getElementById('musicCurrentTime').textContent = '00:00';
+      document.getElementById('musicProgressFill').style.width = '0%';
+    }
+  });
+}
+
+// 进度条拖拽/点击
+function initMusicProgressDrag() {
+  const track = document.getElementById('musicProgressTrack');
+  if (!track) return;
+
+  track.addEventListener('click', (e) => {
+    seekMusicByEvent(e);
+  });
+
+  track.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    musicProgressDragging = true;
+    seekMusicByEvent(e);
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (musicProgressDragging) {
+      seekMusicByEvent(e);
+    }
+  });
+
+  window.addEventListener('mouseup', () => {
+    musicProgressDragging = false;
+  });
+
+  track.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    musicProgressDragging = true;
+    seekMusicByEvent({ clientX: e.touches[0].clientX });
+  }, { passive: false });
+
+  window.addEventListener('touchmove', (e) => {
+    if (musicProgressDragging) {
+      seekMusicByEvent({ clientX: e.touches[0].clientX });
+    }
+  });
+
+  window.addEventListener('touchend', () => {
+    musicProgressDragging = false;
+  });
+}
+
+// 绑定按钮事件
+function initMusicButtons() {
+  document.getElementById('musicBtnPlay').addEventListener('click', toggleMusicPlay);
+  document.getElementById('musicBtnPrev').addEventListener('click', musicPrev);
+  document.getElementById('musicBtnNext').addEventListener('click', musicNext);
+}
+
+// 主音乐模块初始化
+function initMusicModule() {
+  initMusicButtons();
+  initMusicUpload();
+  bindMusicAudioEvents();
+  initMusicProgressDrag();
+  renderMusicPlaylist();
+  updateMusicButtonStates();
+  // 从 IndexedDB 恢复已上传音乐
+  loadMusicFromStorage();
+
+  // 点击唱片切换播放/暂停
+  document.getElementById('vinylRecord').addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleMusicPlay();
+  });
+}
+
+/* ============================================
+   501飘屏留言墙 - 完整功能
+   ============================================ */
+
+const messageData = [];              // { id, nickname, avatar, text, audioBlob, audioUrl }
+const messageLanes = [null, null, null, null, null];
+let messageIdCounter = 0;
+let selectedAvatar = 'images/cartoon1.jpg';
+let recordedBlob = null;
+let recordedUrl = null;
+let currentMsgAudio = null;
+
+// ---- 构建头像选择器 ----
+function initAvatarSelector() {
+  const container = document.getElementById('avatarSelector');
+  const presets = [
+    'images/cartoon1.jpg', 'images/cartoon2.jpg', 'images/cartoon3.jpg',
+    'images/cartoon4.jpg', 'images/cartoon5.jpg', 'images/member1.jpg'
+  ];
+
+  presets.forEach((src, i) => {
+    const img = document.createElement('img');
+    img.className = 'avatar-option' + (i === 0 ? ' selected' : '');
+    img.src = src;
+    img.addEventListener('click', () => {
+      container.querySelectorAll('.avatar-option').forEach(o => o.classList.remove('selected'));
+      img.classList.add('selected');
+      selectedAvatar = src;
+    });
+    container.appendChild(img);
+  });
+
+  // 自定义上传
+  const upload = document.createElement('div');
+  upload.className = 'avatar-upload';
+  upload.textContent = '+';
+  upload.title = '上传头像';
+  upload.addEventListener('click', () => {
+    document.getElementById('msgAvatarInput').click();
+  });
+  container.appendChild(upload);
+
+  document.getElementById('msgAvatarInput').addEventListener('change', function() {
+    const file = this.files[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    const img = document.createElement('img');
+    img.className = 'avatar-option selected';
+    img.src = url;
+    container.querySelectorAll('.avatar-option').forEach(o => o.classList.remove('selected'));
+    // 插入在上传按钮之前
+    const existCustom = container.querySelector('.avatar-custom');
+    if (existCustom) existCustom.remove();
+    img.classList.add('avatar-custom');
+    container.insertBefore(img, upload);
+    selectedAvatar = url;
+    this.value = '';
+  });
+}
+
+// ---- 语音录制 ----
+const RECORD_STATE = { IDLE: 'idle', RECORDING: 'recording', RECORDED: 'recorded' };
+let recordState = RECORD_STATE.IDLE;
+let recordTimeout = null;
+let mediaRecorder = null;
+let mediaStream = null;
+
+function setRecordState(state) {
+  recordState = state;
+  const btn = document.getElementById('msgRecordBtn');
+  // 清除旧的超时
+  if (recordTimeout) { clearTimeout(recordTimeout); recordTimeout = null; }
+
+  switch (state) {
+    case RECORD_STATE.IDLE:
+      btn.textContent = '🎤 点击录制';
+      btn.classList.remove('recording', 'recorded');
+      break;
+    case RECORD_STATE.RECORDING:
+      btn.textContent = '⏺ 正在录制';
+      btn.classList.add('recording');
+      btn.classList.remove('recorded');
+      break;
+    case RECORD_STATE.RECORDED:
+      btn.textContent = '🔊 已录制';
+      btn.classList.remove('recording');
+      btn.classList.add('recorded');
+      // 2分钟无操作自动清除
+      recordTimeout = setTimeout(() => {
+        clearRecordedAudio();
+        setRecordState(RECORD_STATE.IDLE);
+      }, 120000);
+      break;
+  }
+}
+
+function clearRecordedAudio() {
+  // 注意：不在这里 revoke URL，因为消息可能还在使用
+  // URL 会在 removeMessage 或 animationend 时被 revoke
+  recordedUrl = null;
+  recordedBlob = null;
+  if (mediaStream) {
+    mediaStream.getTracks().forEach(t => t.stop());
+    mediaStream = null;
+  }
+  mediaRecorder = null;
+}
+
+function initVoiceRecord() {
+  const btn = document.getElementById('msgRecordBtn');
+  let chunks = [];
+
+  // 点击模式：第1次开始录制，第2次停止录制
+  btn.addEventListener('click', async () => {
+    if (recordState === RECORD_STATE.IDLE) {
+      // 开始录制
+      try {
+        mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(mediaStream, { mimeType: 'audio/webm' });
+        chunks = [];
+        mediaRecorder.ondataavailable = e => chunks.push(e.data);
+        mediaRecorder.onstop = () => {
+          recordedBlob = new Blob(chunks, { type: 'audio/webm' });
+          if (recordedUrl) URL.revokeObjectURL(recordedUrl);
+          recordedUrl = URL.createObjectURL(recordedBlob);
+          mediaStream.getTracks().forEach(t => t.stop());
+          mediaStream = null;
+          setRecordState(RECORD_STATE.RECORDED);
+        };
+        // 监听麦克风权限被撤销
+        mediaStream.getAudioTracks().forEach(track => {
+          track.onended = () => {
+            if (recordState === RECORD_STATE.RECORDING) {
+              mediaRecorder.stop();
+              alert('录制中断，请重新授权麦克风');
+              clearRecordedAudio();
+              setRecordState(RECORD_STATE.IDLE);
+            }
+          };
+        });
+        mediaRecorder.start();
+        setRecordState(RECORD_STATE.RECORDING);
+      } catch (err) {
+        alert('无法访问麦克风: ' + err.message);
+        setRecordState(RECORD_STATE.IDLE);
+      }
+    } else if (recordState === RECORD_STATE.RECORDING) {
+      // 停止录制
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+      }
+    }
+    // RECORDED 状态下点击不做任何事（需先发送或手动清除）
+  });
+
+  // 音频文件上传
+  document.getElementById('msgUploadBtn').addEventListener('click', () => {
+    document.getElementById('msgAudioInput').click();
+  });
+  document.getElementById('msgAudioInput').addEventListener('change', function() {
+    const file = this.files[0];
+    if (!file) return;
+    clearRecordedAudio();
+    recordedBlob = file;
+    recordedUrl = URL.createObjectURL(file);
+    setRecordState(RECORD_STATE.RECORDED);
+    this.value = '';
+  });
+}
+
+// ---- 轨道管理 ----
+function createMessageLanes() {
+  const wall = document.getElementById('messageWallFloat');
+  wall.innerHTML = '';
+  for (let i = 0; i < 5; i++) {
+    const lane = document.createElement('div');
+    lane.className = 'message-lane';
+    lane.style.top = (i * 20) + '%';
+    lane.id = 'messageLane' + i;
+    wall.appendChild(lane);
+  }
+}
+
+function assignLane() {
+  for (let i = 0; i < messageLanes.length; i++) {
+    if (!messageLanes[i]) return i;
+  }
+  return -1;
+}
+
+// ---- 发送留言 ----
+function sendMessage() {
+  const nickname = document.getElementById('msgNickname').value.trim() || '匿名';
+  const text = document.getElementById('msgText').value.trim();
+  const hasVoice = !!recordedUrl;
+
+  if (!text && !hasVoice) {
+    document.getElementById('msgText').placeholder = '请先输入文字或录制语音';
+    setTimeout(() => { document.getElementById('msgText').placeholder = '说点什么...'; }, 1500);
+    return;
+  }
+
+  const msg = {
+    id: ++messageIdCounter,
+    nickname: nickname,
+    avatar: selectedAvatar,
+    text: text || '[语音留言]',
+    audioBlob: recordedBlob,
+    audioUrl: recordedUrl
+  };
+
+  // 添加到数据（永久保留）
+  messageData.push(msg);
+  saveMessagesToStorage();
+
+  // 尝试显示飘屏
+  const spawned = spawnMessage(msg);
+
+  // 无论是否上墙，数据已保留，控制台列表必须刷新
+  renderConsoleMsgList();
+
+  if (!spawned) {
+    alert('飘屏轨道已满，留言已保存，请稍后重试发送');
+    return;
+  }
+
+  // 发送成功 → 只重置录制状态，不动留言数据
+  document.getElementById('msgText').value = '';
+  clearRecordedAudio();
+  setRecordState(RECORD_STATE.IDLE);
+}
+
+// ---- 存储持久化（localStorage 主存储，可靠不丢数据） ----
+function saveMessagesToStorage() {
+  try {
+    const data = messageData.map(m => ({
+      id: m.id,
+      nickname: m.nickname,
+      avatar: m.avatar,
+      text: m.text,
+      hasVoice: !!m.audioUrl
+    }));
+    localStorage.setItem('msgWallData', JSON.stringify(data));
+    localStorage.setItem('msgWallIdCounter', messageIdCounter);
+  } catch(e) { /* 静默降级 */ }
+}
+
+function loadMessagesFromStorage() {
+  try {
+    const saved = localStorage.getItem('msgWallData');
+    if (!saved) return;
+    const data = JSON.parse(saved);
+    messageIdCounter = parseInt(localStorage.getItem('msgWallIdCounter')) || 0;
+
+    data.forEach(item => {
+      messageData.push({
+        id: item.id,
+        nickname: item.nickname,
+        avatar: item.avatar,
+        text: item.text + (item.hasVoice ? '' : ''),
+        audioBlob: null,
+        audioUrl: null
+      });
+    });
+
+    messageData.forEach(msg => { spawnMessage(msg); });
+    renderConsoleMsgList();
+  } catch(e) { /* 静默降级 */ }
+}
+
+// ---- 生成漂浮留言 ----
+function spawnMessage(msg) {
+  const laneIdx = assignLane();
+  if (laneIdx < 0) return false;
+
+  const lane = document.getElementById('messageLane' + laneIdx);
+  const baseSpeed = parseFloat(document.getElementById('msgSpeedSelect').value) || 12;
+  // 随机速度微调 ±20%
+  const speedVariation = baseSpeed * (0.8 + Math.random() * 0.4);
+  const speed = speedVariation.toFixed(1);
+  const opacity = document.getElementById('msgOpacitySelect').value || 0.85;
+
+  const bubble = document.createElement('div');
+  bubble.className = 'message-bubble';
+  bubble.setAttribute('data-id', msg.id);
+  bubble.style.setProperty('--drift-dur', speed + 's');
+  bubble.style.opacity = opacity;
+
+  bubble.innerHTML = `
+    <span class="msg-avatar-wrap" style="position:relative;flex-shrink:0">
+      <img class="msg-avatar" src="${msg.avatar}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 36 36%22><circle cx=%2218%22 cy=%2218%22 r=%2218%22 fill=%22%23E8E0D3%22/></svg>'">
+      <span class="msg-play-indicator"></span>
+    </span>
+    <span class="msg-nick">${msg.nickname}</span>
+    ${msg.audioUrl ? `<button class="msg-play-btn" title="播放语音">▶</button>` : ''}
+    ${msg.audioUrl ? `<div class="msg-waveform">${'<div class="msg-wave-bar" style="height:'+(6+Math.random()*12)+'px"></div>'.repeat(5)}</div>` : ''}
+    <span class="msg-text">${msg.text}</span>
+    <button class="msg-delete-btn" title="删除">✕</button>
+  `;
+
+  // 删除按钮
+  bubble.querySelector('.msg-delete-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    removeMessage(msg.id, laneIdx);
+  });
+
+  // 播放按钮
+  if (msg.audioUrl) {
+    const playBtn = bubble.querySelector('.msg-play-btn');
+    const waveform = bubble.querySelector('.msg-waveform');
+    const indicator = bubble.querySelector('.msg-play-indicator');
+
+	    playBtn.addEventListener('click', (e) => {
+	      e.stopPropagation();
+	      if (currentMsgAudio && currentMsgAudio.dataset.msgId === String(msg.id)) {
+	        if (!currentMsgAudio.paused) {
+	          currentMsgAudio.pause();
+	          playBtn.textContent = '▶';
+	          waveform.classList.remove('active');
+	          indicator.classList.remove('active');
+	          bubble.classList.remove('playing');
+	          // 暂停 → 立即恢复漂流
+	          unfreezeBubblePosition(bubble);
+	          return;
+	        } else {
+	          // 恢复播放 → 重新冻结位置
+	          freezeBubblePosition(bubble);
+	          currentMsgAudio.play().catch(() => {});
+	          playBtn.textContent = '⏸';
+	          waveform.classList.add('active');
+	          indicator.classList.add('active');
+	          bubble.classList.add('playing');
+	          return;
+	        }
+	      }
+	      freezeBubblePosition(bubble);
+	      playMessageVoice(msg, playBtn, waveform, indicator, bubble);
+	    });
+  }
+
+  // 点击气泡暂停漂浮
+  let pauseTimer = null;
+  bubble.addEventListener('click', () => {
+    if (bubble.style.animationPlayState === 'paused') {
+      bubble.style.animationPlayState = 'running';
+      clearTimeout(pauseTimer);
+    } else {
+      bubble.style.animationPlayState = 'paused';
+      pauseTimer = setTimeout(() => {
+        bubble.style.animationPlayState = 'running';
+      }, 3000);
+    }
+  });
+
+	  // 动画结束 → 循环重新飘入（留言永久常驻）
+	  bubble.addEventListener("animationend", (e) => {
+	    if (e.target !== bubble) return;
+	    if (e.animationName !== "drift-left") return;
+	    // 重置动画实现循环滚动
+	    bubble.style.animation = "none";
+	    bubble.offsetHeight; // 强制回流
+	    bubble.style.animation = "";
+	  });
+
+  lane.appendChild(bubble);
+  messageLanes[laneIdx] = bubble;
+  return true;
+}
+
+// ---- 冻结气泡位置 ----
+function freezeBubblePosition(bubble) {
+  // 获取当前计算位置，固定为 inline style
+  const computed = getComputedStyle(bubble);
+  bubble.style.left = computed.left;
+  bubble.style.animation = 'none';
+}
+
+
+// ---- 播放留言语音 ----
+function playMessageVoice(msg, playBtn, waveform, indicator, bubble) {
+  if (currentMsgAudio) {
+    currentMsgAudio.pause();
+    currentMsgAudio.src = '';
+  }
+
+  const audio = new Audio(msg.audioUrl);
+  audio.dataset.msgId = String(msg.id);
+  currentMsgAudio = audio;
+  waveform.classList.add('active');
+  indicator.classList.add('active');
+  bubble.classList.add('playing');
+  playBtn.textContent = '⏸';
+
+  audio.addEventListener('play', () => {
+    waveform.classList.add('active');
+    indicator.classList.add('active');
+    bubble.classList.add('playing');
+    playBtn.textContent = '⏸';
+  });
+
+  audio.addEventListener('pause', () => {
+    waveform.classList.remove('active');
+    indicator.classList.remove('active');
+    bubble.classList.remove('playing');
+    playBtn.textContent = '▶';
+  });
+
+  audio.addEventListener('ended', () => {
+    waveform.classList.remove('active');
+    indicator.classList.remove('active');
+    bubble.classList.remove('playing');
+    playBtn.textContent = '▶';
+    currentMsgAudio = null;
+    // 播放完毕 → 渐变淡出消失
+    unfreezeBubblePosition(bubble);
+  });
+
+  audio.play().catch(err => {
+    console.warn('语音播放失败:', err);
+    waveform.classList.remove('active');
+    indicator.classList.remove('active');
+    bubble.classList.remove('playing');
+    playBtn.textContent = '▶';
+  });
+}
+
+// ---- 解除驻留，恢复循环滚动 ----
+function unfreezeBubblePosition(bubble) {
+  // 清除冻结时的 inline style，让 CSS 动画重新接管
+  bubble.style.left = '';
+  bubble.style.animation = '';
+}
+
+
+// ---- 删除留言 ----
+function removeMessage(id, laneIdx) {
+  messageLanes[laneIdx] = null;
+  const idx = messageData.findIndex(m => m.id === id);
+  if (idx >= 0) {
+    const msg = messageData[idx];
+    if (msg.audioUrl) URL.revokeObjectURL(msg.audioUrl);
+    messageData.splice(idx, 1);
+  }
+  saveMessagesToStorage();
+  // 停止播放
+  if (currentMsgAudio && currentMsgAudio.dataset.msgId === String(id)) {
+    currentMsgAudio.pause();
+    currentMsgAudio.src = '';
+    currentMsgAudio = null;
+  }
+  // 移除 DOM（在 lane 中查找）
+  const lane = document.getElementById('messageLane' + laneIdx);
+  if (lane) {
+    const bubble = lane.querySelector('[data-id="' + id + '"]');
+    if (bubble) bubble.remove();
+  }
+  renderConsoleMsgList();
+}
+
+// ---- 控制台留言列表 ----
+function renderConsoleMsgList() {
+  const container = document.getElementById('consoleMsgItems');
+  container.innerHTML = '';
+  if (messageData.length === 0) {
+    container.innerHTML = '<span style="font-size:10px;color:var(--text-light);opacity:0.4;letter-spacing:2px;">暂无留言</span>';
+    return;
+  }
+  messageData.forEach(msg => {
+    const item = document.createElement('div');
+    item.className = 'console-msg-item';
+    item.title = msg.nickname + ': ' + msg.text + (msg.audioUrl ? ' [语音]' : '');
+    item.innerHTML = `
+      <img class="cmi-avatar" src="${msg.avatar}" onerror="this.style.display='none'">
+      <span class="cmi-text">${msg.nickname}: ${msg.text}</span>
+      ${msg.audioUrl ? '<span style="font-size:10px">🔊</span>' : ''}
+      <button class="cmi-del">✕</button>
+    `;
+    item.querySelector('.cmi-del').addEventListener('click', (e) => {
+      e.stopPropagation();
+      // 找到并移除漂浮气泡
+      for (let i = 0; i < messageLanes.length; i++) {
+        if (messageLanes[i] && messageLanes[i].getAttribute('data-id') === String(msg.id)) {
+          removeMessage(msg.id, i);
+          break;
+        }
+      }
+      // 如果不在漂浮中，直接从 data 删除
+      const idx = messageData.findIndex(m => m.id === msg.id);
+      if (idx >= 0) {
+        if (messageData[idx].audioUrl) URL.revokeObjectURL(messageData[idx].audioUrl);
+        messageData.splice(idx, 1);
+        saveMessagesToStorage();
+      }
+      renderConsoleMsgList();
+    });
+    item.addEventListener('click', () => {
+      // 点击预览：滚动到对应漂浮留言并暂停
+      for (let i = 0; i < messageLanes.length; i++) {
+        if (messageLanes[i] && messageLanes[i].getAttribute('data-id') === String(msg.id)) {
+          const bubble = messageLanes[i];
+          bubble.style.animationPlayState = 'paused';
+          bubble.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setTimeout(() => { bubble.style.animationPlayState = 'running'; }, 3000);
+          break;
+        }
+      }
+    });
+    container.appendChild(item);
+  });
+}
+
+// ---- 主初始化 ----
+function initMessageWall() {
+  createMessageLanes();
+  initAvatarSelector();
+  initVoiceRecord();
+  loadMessagesFromStorage();
+
+  document.getElementById('msgSendBtn').addEventListener('click', sendMessage);
+  document.getElementById('msgText').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') sendMessage();
+  });
+
+  // 页面关闭/刷新时清理录制资源
+  window.addEventListener('beforeunload', () => {
+    clearRecordedAudio();
+  });
+}
+
+// ---- 入口 ----
+function initAlbumEntry() {
+  document.getElementById('albumEntry').addEventListener('click', openBook);
+  document.getElementById('bookBackBtn').addEventListener('click', (e) => { e.stopPropagation(); closeBook(); });
+
+  // 翻页按钮
+  document.getElementById('bookPagePrev').addEventListener('click', (e) => { e.stopPropagation(); bookPagePrev(); });
+  document.getElementById('bookPageNext').addEventListener('click', (e) => { e.stopPropagation(); bookPageNext(); });
+  document.getElementById('bookFooterPrev').addEventListener('click', (e) => { e.stopPropagation(); bookPagePrev(); });
+  document.getElementById('bookFooterNext').addEventListener('click', (e) => { e.stopPropagation(); bookPageNext(); });
+
+  // 防止 overlay 背景点击穿透到主页
+  document.getElementById('bookOverlay').addEventListener('click', function(e) {
+    if (e.target === this) { e.stopPropagation(); }
+  });
+
+  // 书本页面滑动翻页支持
+  initBookSwipe();
+}
+
+// ---- 书本页面滑动翻页 ----
+function initBookSwipe() {
+  let swipeStartX = 0, swipeDeltaX = 0, swiping = false;
+
+  const container = document.getElementById('bookContainer');
+  if (!container) return;
+
+  container.addEventListener('touchstart', (e) => {
+    if (document.getElementById('bookViewer').classList.contains('active')) return;
+    swipeStartX = e.touches[0].clientX;
+    swipeDeltaX = 0;
+    swiping = true;
+  }, { passive: true });
+
+  container.addEventListener('touchmove', (e) => {
+    if (!swiping) return;
+    swipeDeltaX = e.touches[0].clientX - swipeStartX;
+  }, { passive: true });
+
+  container.addEventListener('touchend', () => {
+    if (!swiping) return;
+    if (swipeDeltaX < -80) bookPageNext();
+    else if (swipeDeltaX > 80) bookPagePrev();
+    swiping = false;
+    swipeDeltaX = 0;
+  });
+
+  // 鼠标拖拽翻页
+  let md = false, msx = 0;
+  container.addEventListener('mousedown', (e) => {
+    if (document.getElementById('bookViewer').classList.contains('active')) return;
+    if (e.target.closest('.book-thumb') || e.target.closest('button') || e.target.closest('input')) return;
+    md = true; msx = e.clientX; swipeDeltaX = 0;
+  });
+  window.addEventListener('mousemove', (e) => {
+    if (md) swipeDeltaX = e.clientX - msx;
+  });
+  window.addEventListener('mouseup', () => {
+    if (!md) return;
+    if (swipeDeltaX < -80) bookPageNext();
+    else if (swipeDeltaX > 80) bookPagePrev();
+    md = false; swipeDeltaX = 0;
+  });
+}
+
+/* ============================================
+   自定义光标系统
+   ============================================ */
+function initCustomCursor() {
+  const cursor = document.getElementById('custom-cursor');
+  const trailContainer = document.createDocumentFragment();
+  let mouseX = -100, mouseY = -100;
+  let cursorX = -100, cursorY = -100;
+  let trailPoints = [];
+
+  document.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+
+    // 生成尾迹点(每3帧一个)
+    if (Math.random() < 0.35) {
+      const trail = document.createElement('div');
+      trail.className = 'cursor-trail';
+      trail.style.left = e.clientX + 'px';
+      trail.style.top = e.clientY + 'px';
+      document.body.appendChild(trail);
+      setTimeout(() => trail.remove(), 600);
+    }
+  });
+
+  // 卡片上光标变大
+  document.addEventListener('mouseover', (e) => {
+    if (e.target.closest('.member-card')) {
+      cursor.classList.add('on-card');
+    }
+  });
+  document.addEventListener('mouseout', (e) => {
+    if (e.target.closest('.member-card') && !e.relatedTarget?.closest('.member-card')) {
+      cursor.classList.remove('on-card');
+    }
+  });
+
+  function updateCursor() {
+    cursorX += (mouseX - cursorX) * 0.25;
+    cursorY += (mouseY - cursorY) * 0.25;
+    cursor.style.left = cursorX + 'px';
+    cursor.style.top = cursorY + 'px';
+    requestAnimationFrame(updateCursor);
+  }
+  updateCursor();
+}
+
+/* ============================================
+   鼠标滑动渐变显实系统 (核心交互)
+   使用 clip-path + requestAnimationFrame + lerp
+   ============================================ */
+function initCardReveal() {
+  const cards = document.querySelectorAll('.member-card, .group-photo-card');
+  const states = [];
+
+  cards.forEach((card, i) => {
+    const frame = card.querySelector('.card-frame');
+    const cartoonLayer = card.querySelector('.cartoon-layer');
+
+    const state = {
+      targetX: -200,
+      targetY: -200,
+      targetR: 0,
+      currentX: -200,
+      currentY: -200,
+      currentR: 0,
+      card: card,
+      layer: cartoonLayer
+    };
+    states.push(state);
+
+    card.addEventListener('mousemove', (e) => {
+      const rect = frame.getBoundingClientRect();
+      state.targetX = e.clientX - rect.left;
+      state.targetY = e.clientY - rect.top;
+      state.targetR = 105;
+    });
+
+    card.addEventListener('mouseleave', () => {
+      state.targetR = 0;
+    });
+
+    // 触摸支持
+    card.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      const rect = frame.getBoundingClientRect();
+      const touch = e.touches[0];
+      state.targetX = touch.clientX - rect.left;
+      state.targetY = touch.clientY - rect.top;
+      state.targetR = 105;
+    }, { passive: false });
+
+    card.addEventListener('touchend', () => {
+      state.targetR = 0;
+    });
+  });
+
+  function animate() {
+    for (const s of states) {
+      // 平滑插值
+      s.currentX += (s.targetX - s.currentX) * 0.09;
+      s.currentY += (s.targetY - s.currentY) * 0.09;
+      s.currentR += (s.targetR - s.currentR) * 0.07;
+
+      if (s.currentR > 1.5) {
+        s.layer.style.clipPath =
+          `circle(${s.currentR.toFixed(1)}px at ${s.currentX.toFixed(1)}px ${s.currentY.toFixed(1)}px)`;
+      } else {
+        s.layer.style.clipPath = 'circle(0px at 0px 0px)';
+      }
+    }
+    requestAnimationFrame(animate);
+  }
+  animate();
+}
+
+/* ============================================
+   滚动布料晃动效果
+   ============================================ */
+function initScrollSway() {
+  const header = document.querySelector('.header');
+  const cards = document.querySelectorAll('.member-card, .group-photo-card');
+  let scrollY = 0;
+  let targetScrollY = 0;
+
+  window.addEventListener('scroll', () => {
+    targetScrollY = window.scrollY;
+  }, { passive: true });
+
+  function updateSway() {
+    scrollY += (targetScrollY - scrollY) * 0.06;
+
+    // 标题区轻微晃动
+    const sway1 = Math.sin(scrollY * 0.003) * 3;
+    header.style.transform = `translateY(${sway1}px)`;
+
+    // 卡片容器轻微交错晃动（不影响内部 card-frame 的 hover 动效）
+    cards.forEach((card, i) => {
+      const sway = Math.sin(scrollY * 0.004 + i * 0.6) * 2.5;
+      card.style.transform = `translateY(${sway * 0.6}px) rotate(${sway * 0.08}deg)`;
+    });
+
+    requestAnimationFrame(updateSway);
+  }
+  updateSway();
+}
+
+/* ============================================
+   滚动触发渐入动画
+   ============================================ */
+function initScrollReveal() {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.15 });
+
+  document.querySelectorAll('.music-module, .album-entry-card, .about-inner, .footer').forEach(el => {
+    el.classList.add('animate-in');
+    observer.observe(el);
+  });
+
+  // 初始可见元素立即触发
+  setTimeout(() => {
+    document.querySelectorAll('.music-module, .album-entry-card, .about-inner, .footer').forEach(el => {
+      const rect = el.getBoundingClientRect();
+      if (rect.top < window.innerHeight) {
+        el.classList.add('visible');
+      }
+    });
+  }, 1500);
+}
+
+/* ============================================
+   加载动画
+   ============================================ */
+function initLoadingScreen() {
+  const loading = document.getElementById('loading-screen');
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      loading.classList.add('hidden');
+      setTimeout(() => loading.remove(), 600);
+    }, 1800);
+  });
+  // 兜底：3 秒后强制隐藏
+  setTimeout(() => {
+    if (!loading.classList.contains('hidden')) {
+      loading.classList.add('hidden');
+      setTimeout(() => loading.remove(), 600);
+    }
+  }, 3500);
+}
+
+/* ============================================
+   回到顶部按钮显隐
+   ============================================ */
+function initBackToTop() {
+  const btn = document.getElementById('backToTop');
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 600) {
+      btn.classList.add('visible');
+    } else {
+      btn.classList.remove('visible');
+    }
+  }, { passive: true });
+}
+
+/* ============================================
+   标题区视差位移
+   ============================================ */
+function initParallax() {
+  const headerInner = document.querySelector('.header-inner');
+  if (!headerInner) return;
+  window.addEventListener('scroll', () => {
+    const scrollY = window.scrollY;
+    if (scrollY < window.innerHeight) {
+      headerInner.style.transform = `translateY(${scrollY * 0.08}px)`;
+      headerInner.style.opacity = Math.max(0, 1 - scrollY / (window.innerHeight * 0.7));
+    }
+  }, { passive: true });
+}
+
+/* ============================================
+   初始化
+   ============================================ */
+function init() {
+  buildMemberCards();
+  initAlbumEntry();
+  initAlbumUpload();
+  initBookViewer();
+  initMusicModule();
+  initMessageWall();
+  initCustomCursor();
+  initCardReveal();
+  initScrollSway();
+  initScrollReveal();
+  initLoadingScreen();
+  initBackToTop();
+  initParallax();
+
+  console.log('🧵 501宿舍 | 电气2301 — 针织纪念主页已就绪');
+  console.log('   扬州职业技术大学 · 电气自动化技术专业');
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+
+<!-- 回到顶部按钮 -->
+<button id="backToTop" title="回到顶部" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<!-- 隐藏音频播放器 -->
+<audio id="musicAudio" preload="metadata" style="display:none"></audio>
+
+</body>
+</html>
