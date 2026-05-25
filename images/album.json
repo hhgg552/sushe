@@ -64,6 +64,10 @@
     "type": "photo"
   },
   {
+    "url": "images/gallery2.jpg",
+    "type": "photo"
+  },
+  {
     "url": "images/gallery20.jpg",
     "type": "photo"
   },
@@ -77,6 +81,14 @@
   },
   {
     "url": "images/gallery23.jpg",
+    "type": "photo"
+  },
+  {
+    "url": "images/gallery3.jpg",
+    "type": "photo"
+  },
+  {
+    "url": "images/gallery4.jpg",
     "type": "photo"
   },
   {
