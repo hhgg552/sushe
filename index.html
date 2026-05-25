@@ -2696,7 +2696,7 @@ function buildBookThumb(item, index) {
 }
 
 // ---- 书本打开/关闭 ----
-function openBook() {
+async function openBook() {
   const overlay = document.getElementById('bookOverlay');
   const container = document.getElementById('bookContainer');
   overlay.classList.remove('closing');
@@ -2705,6 +2705,9 @@ function openBook() {
   document.body.style.overflow = 'hidden';
   document.getElementById('custom-cursor').style.display = 'none';
   bookCurrentPage = 0;
+
+  // 每次打开相册时先同步服务器文件列表
+  await loadAlbumFromServer();
   renderBookPages();
   playPageSound();
 }
