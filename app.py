@@ -86,13 +86,36 @@ def check_git_config():
     return issues
 
 
+def generate_album_json():
+    """生成 images/album.json，供 GitHub Pages 静态读取"""
+    import json
+    items = []
+    if os.path.exists(UPLOAD_DIR):
+        for name in sorted(os.listdir(UPLOAD_DIR)):
+            if name.startswith('.') or name == 'album.json':
+                continue
+            if not (name.startswith('gallery') or name.startswith('upload_')):
+                continue
+            ext = name.rsplit('.', 1)[-1].lower() if '.' in name else ''
+            if ext in PHOTO_EXTS:
+                items.append({'url': f'images/{name}', 'type': 'photo'})
+            elif ext in VIDEO_EXTS:
+                items.append({'url': f'images/{name}', 'type': 'video'})
+    json_path = os.path.join(UPLOAD_DIR, 'album.json')
+    with open(json_path, 'w', encoding='utf-8') as f:
+        json.dump(items, f, ensure_ascii=False, indent=2)
+
+
 def git_sync(filename):
     """在后台线程中执行 git add → commit → push"""
     def _sync():
         short_name = os.path.basename(filename)
 
-        # 第一步：git add
-        ok, msg = _run_git(['add', filename])
+        # 第一步：更新 album.json
+        generate_album_json()
+
+        # 第二步：git add（图片 + album.json）
+        ok, msg = _run_git(['add', filename, 'images/album.json'])
         if not ok:
             print(f'  [Git] add 失败: {msg}')
             return
@@ -199,6 +222,7 @@ def upload():
 
 if __name__ == '__main__':
     os.makedirs(UPLOAD_DIR, exist_ok=True)
+    generate_album_json()  # 生成静态文件列表供 GitHub Pages 使用
 
     print('=' * 50)
     print('  501宿舍纪念网页 已启动')

@@ -2838,30 +2838,48 @@ function bookPageNext() {
 
 // ---- 从服务器加载相册数据 ----
 async function loadAlbumFromServer() {
+  let serverItems = null;
+
+  // 优先尝试 Flask API（本地运行）
   try {
     const resp = await fetch('/api/images');
-    if (!resp.ok) return;
-    const serverItems = await resp.json();
-    const existingUrls = new Set(albumData.map(item => item.url));
-    let added = false;
-    serverItems.forEach(item => {
-      if (!existingUrls.has(item.url)) {
-        albumData.push({
-          type: item.type,
-          url: item.url,
-          caption: item.url.split('/').pop().replace(/\.[^/.]+$/, ''),
-        });
-        added = true;
-      }
-    });
-    // 如果相册已打开且有新内容，刷新显示
-    if (added && document.getElementById('bookOverlay').classList.contains('active')) {
-      totalPages = Math.max(1, Math.ceil(albumData.length / ITEMS_PER_PAGE));
-      renderBookPages();
+    if (resp.ok) {
+      serverItems = await resp.json();
     }
-  } catch(e) {
-    // 非 Flask 环境（如 GitHub Pages）静默降级，使用硬编码 albumData
+  } catch(e) { /* 继续尝试下一方式 */ }
+
+  // 降级：读取静态 album.json（GitHub Pages 兼容）
+  if (!serverItems) {
+    try {
+      const resp = await fetch('images/album.json');
+      if (resp.ok) {
+        serverItems = await resp.json();
+      }
+    } catch(e) { /* 继续降级 */ }
+  }
+
+  // 均不可用则使用硬编码数据
+  if (!serverItems) {
     console.log('📋 使用本地相册数据（未连接后端服务器）');
+    return;
+  }
+
+  const existingUrls = new Set(albumData.map(item => item.url));
+  let added = false;
+  serverItems.forEach(item => {
+    if (!existingUrls.has(item.url)) {
+      albumData.push({
+        type: item.type,
+        url: item.url,
+        caption: item.url.split('/').pop().replace(/\.[^/.]+$/, ''),
+      });
+      added = true;
+    }
+  });
+  // 如果相册已打开且有新内容，刷新显示
+  if (added && document.getElementById('bookOverlay').classList.contains('active')) {
+    totalPages = Math.max(1, Math.ceil(albumData.length / ITEMS_PER_PAGE));
+    renderBookPages();
   }
 }
 
