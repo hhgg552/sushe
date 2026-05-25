@@ -2833,20 +2833,83 @@ function bookPageNext() {
   if (bookCurrentPage < totalPages - 1) { bookCurrentPage++; playPageSound(); renderBookPages('next'); }
 }
 
+// ---- 从服务器加载相册数据 ----
+async function loadAlbumFromServer() {
+  try {
+    const resp = await fetch('/api/images');
+    if (!resp.ok) return;
+    const serverItems = await resp.json();
+    const existingUrls = new Set(albumData.map(item => item.url));
+    let added = false;
+    serverItems.forEach(item => {
+      if (!existingUrls.has(item.url)) {
+        albumData.push({
+          type: item.type,
+          url: item.url,
+          caption: item.url.split('/').pop().replace(/\.[^/.]+$/, ''),
+        });
+        added = true;
+      }
+    });
+    // 如果相册已打开且有新内容，刷新显示
+    if (added && document.getElementById('bookOverlay').classList.contains('active')) {
+      totalPages = Math.max(1, Math.ceil(albumData.length / ITEMS_PER_PAGE));
+      renderBookPages();
+    }
+  } catch(e) {
+    // 非 Flask 环境（如 GitHub Pages）静默降级，使用硬编码 albumData
+    console.log('📋 使用本地相册数据（未连接后端服务器）');
+  }
+}
+
 // ---- 上传 ----
 function initAlbumUpload() {
   const fileInput = document.getElementById('albumFileInput');
-  document.getElementById('bookUploadBtn').addEventListener('click', () => fileInput.click());
-  fileInput.addEventListener('change', function() {
+  const uploadBtn = document.getElementById('bookUploadBtn');
+
+  uploadBtn.addEventListener('click', () => fileInput.click());
+
+  fileInput.addEventListener('change', async function() {
     const files = Array.from(this.files);
     if (!files.length) return;
-    files.forEach(file => {
-      albumData.push({
-        type: file.type.startsWith('video/') ? 'video' : 'photo',
-        url: URL.createObjectURL(file),
-        caption: file.name.replace(/\.[^/.]+$/, ''),
-      });
-    });
+
+    const originalText = uploadBtn.textContent;
+    uploadBtn.textContent = '上传中...';
+    uploadBtn.disabled = true;
+
+    for (const file of files) {
+      // 尝试上传到 Flask 后端
+      let uploaded = false;
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const resp = await fetch('/upload', { method: 'POST', body: formData });
+        if (resp.ok) {
+          const data = await resp.json();
+          albumData.push({
+            type: data.type,
+            url: data.url,
+            caption: file.name.replace(/\.[^/.]+$/, ''),
+          });
+          uploaded = true;
+        }
+      } catch(e) {
+        console.warn('上传失败，使用本地临时展示:', e.message);
+      }
+
+      // 降级：无法连接后端时用本地 blob URL 临时预览
+      if (!uploaded) {
+        albumData.push({
+          type: file.type.startsWith('video/') ? 'video' : 'photo',
+          url: URL.createObjectURL(file),
+          caption: file.name.replace(/\.[^/.]+$/, ''),
+        });
+      }
+    }
+
+    uploadBtn.textContent = originalText;
+    uploadBtn.disabled = false;
+
     // 自动跳到最后一页展示新上传内容
     totalPages = Math.max(1, Math.ceil(albumData.length / ITEMS_PER_PAGE));
     bookCurrentPage = totalPages - 1;
@@ -3520,6 +3583,7 @@ function init() {
   buildMemberCards();
   initAlbumEntry();
   initAlbumUpload();
+  loadAlbumFromServer();  // 从后端加载已上传的媒体文件
   initBookViewer();
   initMusicModule();
   initCustomCursor();
