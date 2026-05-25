@@ -1281,12 +1281,12 @@ body::after {
 }
 .book-left-page.page-turning-out {
   opacity: 0.4;
-  transform: rotateY(-8deg);
+  transform: rotateY(calc(8deg * var(--fold-dir, -1)));
   transform-origin: right center;
 }
 .book-right-page.page-turning-out {
   opacity: 0.4;
-  transform: rotateY(8deg);
+  transform: rotateY(calc(-8deg * var(--fold-dir, -1)));
   transform-origin: left center;
 }
 
@@ -2054,484 +2054,6 @@ body::after {
   flex-shrink: 0;
   letter-spacing: 1px;
 }
-
-/* ============================================
-   501飘屏留言墙 - 独立容器布局
-   ============================================ */
-
-/* 留言墙外框 */
-.message-wall-section {
-  padding: 10px 20px 50px;
-  text-align: center;
-}
-
-.message-wall-container {
-  max-width: 900px;
-  margin: 0 auto;
-  border: 3px dashed rgba(26, 54, 93, 0.25);
-  border-radius: 12px;
-  background: linear-gradient(135deg, #EDE5D8 0%, #F5F0E8 30%, #E8E0D3 70%, #DFD5C5 100%);
-  box-shadow: 0 4px 8px rgba(26,54,93,0.06), 0 8px 24px rgba(26,54,93,0.04);
-  overflow: hidden;
-  position: relative;
-}
-
-/* 针织纹理覆盖 */
-.message-wall-container::after {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  pointer-events: none;
-  border-radius: 9px;
-  z-index: 0;
-  background:
-    repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(26,54,93,0.012) 4px, rgba(26,54,93,0.012) 5px),
-    repeating-linear-gradient(90deg, transparent, transparent 4px, rgba(26,54,93,0.008) 4px, rgba(26,54,93,0.008) 5px);
-}
-
-/* 飘屏区域 */
-.message-wall-float {
-  position: relative;
-  height: 220px;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 1;
-}
-
-/* 飘屏轨道 */
-.message-lane {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 60px;
-  pointer-events: none;
-}
-
-/* 留言气泡 */
-.message-bubble {
-  position: absolute;
-  top: 6px;
-  left: -200%;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px 6px 7px;
-  background: linear-gradient(135deg, #FDFAF5 0%, #F5EDDE 100%);
-  border: 2px dashed rgba(26, 54, 93, 0.28);
-  border-radius: 20px;
-  box-shadow: 0 2px 12px rgba(26, 54, 93, 0.08), 0 0 0 1px rgba(26, 54, 93, 0.04);
-  white-space: nowrap;
-  pointer-events: auto;
-  cursor: pointer;
-  user-select: none;
-  animation: drift-left var(--drift-dur, 10s) linear forwards;
-  animation-play-state: running;
-  overflow: visible;
-}
-
-/* 呼吸灯 */
-.message-bubble::before {
-  content: '';
-  position: absolute;
-  top: -3px; left: -3px; right: -3px; bottom: -3px;
-  border-radius: 22px;
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0;
-  box-shadow: 0 0 18px rgba(184,151,90,0.3), 0 0 6px rgba(184,151,90,0.15);
-  transition: opacity 0.4s ease;
-}
-.message-bubble.playing::before {
-  opacity: 1;
-  animation: msg-breathe 1.5s ease-in-out infinite;
-}
-
-@keyframes msg-breathe {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 1; }
-}
-
-/* 针织纹理 */
-.message-bubble::after {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  border-radius: 18px;
-  pointer-events: none;
-  background:
-    repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(26,54,93,0.012) 3px, rgba(26,54,93,0.012) 4px);
-}
-
-/* 飘屏动画 - 保证起终点都在容器外 */
-@keyframes drift-left {
-  from { left: -200%; }
-  to   { left: 200%; }
-}
-
-/* 气泡内元素 */
-.msg-avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  border: 2px solid rgba(26, 54, 93, 0.2);
-  object-fit: cover;
-  flex-shrink: 0;
-  position: relative;
-  z-index: 1;
-}
-
-.msg-play-indicator {
-  position: absolute;
-  top: -2px;
-  right: -2px;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--navy);
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.msg-play-indicator.active {
-  opacity: 1;
-  animation: indicator-pulse 0.6s ease-in-out infinite;
-}
-@keyframes indicator-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.3); }
-}
-
-.msg-nick {
-  font-size: 11px;
-  color: var(--navy);
-  font-weight: bold;
-  letter-spacing: 2px;
-  flex-shrink: 0;
-  position: relative;
-  z-index: 1;
-}
-
-.msg-play-btn {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  border: 1.5px dashed rgba(26, 54, 93, 0.3);
-  background: rgba(245, 240, 232, 0.8);
-  color: var(--navy);
-  font-size: 10px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: all 0.2s ease;
-  position: relative;
-  z-index: 1;
-}
-.msg-play-btn:hover {
-  border-color: rgba(26, 54, 93, 0.6);
-  background: rgba(26, 54, 93, 0.06);
-}
-
-.msg-text {
-  font-size: 12px;
-  color: var(--text);
-  letter-spacing: 2px;
-  position: relative;
-  z-index: 1;
-}
-
-/* 删除按钮 */
-.msg-delete-btn {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(26, 54, 93, 0.1);
-  color: var(--navy);
-  font-size: 10px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  flex-shrink: 0;
-  position: relative;
-  z-index: 1;
-}
-.message-bubble:hover .msg-delete-btn {
-  opacity: 0.6;
-}
-.msg-delete-btn:hover {
-  opacity: 1 !important;
-  background: rgba(200, 60, 60, 0.15);
-  color: #c0392b;
-}
-
-/* ---- 声波动画 ---- */
-.msg-waveform {
-  display: none;
-  align-items: flex-end;
-  gap: 2px;
-  height: 20px;
-  flex-shrink: 0;
-  position: relative;
-  z-index: 1;
-}
-.msg-waveform.active {
-  display: flex;
-}
-.msg-wave-bar {
-  width: 3px;
-  background: var(--navy);
-  border-radius: 2px;
-  animation: none;
-}
-.msg-waveform.active .msg-wave-bar {
-  animation: wave-jump 0.6s ease-in-out infinite;
-}
-.msg-waveform.active .msg-wave-bar:nth-child(1) { animation-delay: 0s; }
-.msg-waveform.active .msg-wave-bar:nth-child(2) { animation-delay: 0.12s; }
-.msg-waveform.active .msg-wave-bar:nth-child(3) { animation-delay: 0.24s; }
-.msg-waveform.active .msg-wave-bar:nth-child(4) { animation-delay: 0.36s; }
-.msg-waveform.active .msg-wave-bar:nth-child(5) { animation-delay: 0.48s; }
-
-@keyframes wave-jump {
-  0%, 100% { height: 6px; }
-  50% { height: 18px; }
-}
-
-/* ---- 控制台（容器内静态区域） ---- */
-.message-wall-console {
-  position: relative;
-  z-index: 1;
-  border-top: 2px dashed rgba(26, 54, 93, 0.2);
-  background: rgba(245,240,232,0.7);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-.console-title-bar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 8px 20px;
-}
-.console-title-bar .console-title-icon {
-  font-size: 14px;
-}
-.console-title-bar .console-title-text {
-  font-size: 12px;
-  color: var(--navy);
-  letter-spacing: 5px;
-  font-weight: bold;
-}
-
-.console-inner {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 6px 16px 10px;
-  flex-wrap: wrap;
-}
-
-/* 输入框统一样式 */
-.console-inner input[type="text"] {
-  border: 2px dashed rgba(26, 54, 93, 0.2);
-  border-radius: 16px;
-  padding: 7px 14px;
-  background: rgba(253, 250, 245, 0.7);
-  color: var(--navy);
-  font-size: 12px;
-  letter-spacing: 2px;
-  font-family: inherit;
-  outline: none;
-  transition: border-color 0.25s ease;
-}
-.console-inner input[type="text"]:focus {
-  border-color: rgba(26, 54, 93, 0.45);
-}
-.console-inner input[type="text"]::placeholder {
-  color: var(--text-light);
-  opacity: 0.5;
-}
-
-.msg-nickname {
-  width: 90px;
-}
-.msg-text-input {
-  flex: 1;
-  min-width: 140px;
-  max-width: 300px;
-}
-
-/* 速度选择器 */
-.msg-speed-select,
-.msg-opacity-select {
-  border: 2px dashed rgba(26, 54, 93, 0.2);
-  border-radius: 14px;
-  padding: 6px 8px;
-  background: rgba(253, 250, 245, 0.7);
-  color: var(--navy);
-  font-size: 11px;
-  letter-spacing: 1px;
-  font-family: inherit;
-  outline: none;
-  cursor: pointer;
-}
-
-/* 头像选择器 */
-.avatar-selector {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.avatar-option {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  border: 2px solid rgba(26, 54, 93, 0.15);
-  object-fit: cover;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-}
-.avatar-option:hover {
-  border-color: rgba(26, 54, 93, 0.45);
-  transform: scale(1.12);
-}
-.avatar-option.selected {
-  border-color: var(--navy);
-  box-shadow: 0 0 0 2px rgba(26, 54, 93, 0.15);
-}
-.avatar-upload {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  border: 2px dashed rgba(26, 54, 93, 0.2);
-  background: rgba(253, 250, 245, 0.5);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  color: var(--navy);
-  opacity: 0.5;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-}
-.avatar-upload:hover {
-  border-color: rgba(26, 54, 93, 0.45);
-  opacity: 0.8;
-}
-
-/* 录音按钮状态 */
-.msg-record-btn.recording {
-  background: rgba(220, 60, 60, 0.1) !important;
-  border-color: rgba(220, 60, 60, 0.4) !important;
-  animation: record-pulse 0.8s ease-in-out infinite;
-}
-.msg-record-btn.recorded {
-  background: rgba(39, 174, 96, 0.1) !important;
-  border-color: rgba(39, 174, 96, 0.35) !important;
-  color: #27ae60 !important;
-}
-@keyframes record-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(220, 60, 60, 0.3); }
-  50% { box-shadow: 0 0 0 8px rgba(220, 60, 60, 0); }
-}
-
-/* 响应式 */
-/* 已发送留言列表 */
-.console-msg-list {
-  border-top: 1px dashed rgba(26, 54, 93, 0.1);
-  max-height: 100px;
-  overflow-y: auto;
-}
-.console-msg-list-header {
-  font-size: 10px;
-  color: var(--text-light);
-  letter-spacing: 3px;
-  padding: 8px 20px 4px;
-  text-align: center;
-  opacity: 0.6;
-}
-.console-msg-list-items {
-  padding: 4px 20px 8px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  justify-content: center;
-}
-.console-msg-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
-  border: 1px dashed rgba(26,54,93,0.15);
-  border-radius: 14px;
-  font-size: 11px;
-  color: var(--navy);
-  letter-spacing: 1px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  background: rgba(253,250,245,0.5);
-  max-width: 200px;
-}
-.console-msg-item:hover {
-  border-color: rgba(26,54,93,0.4);
-  background: rgba(26,54,93,0.04);
-}
-.console-msg-item .cmi-avatar {
-  width: 20px; height: 20px;
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
-}
-.console-msg-item .cmi-text {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.console-msg-item .cmi-del {
-  width: 16px; height: 16px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(200,60,60,0.1);
-  color: #c0392b;
-  font-size: 9px;
-  cursor: pointer;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-.console-msg-item:hover .cmi-del { opacity: 0.7; }
-.console-msg-item .cmi-del:hover { opacity: 1; background: rgba(200,60,60,0.25); }
-
-@media (max-width: 640px) {
-  .message-lane { height: 50px; }
-  .message-bubble { padding: 4px 8px 4px 5px; gap: 4px; }
-  .msg-avatar { width: 26px; height: 26px; }
-  .msg-nick { font-size: 9px; letter-spacing: 1px; }
-  .msg-text { font-size: 10px; }
-  .console-inner { gap: 5px; padding: 4px 8px 8px; }
-  .msg-nickname { width: 60px; }
-  .msg-text-input { max-width: 150px; }
-  .avatar-option, .avatar-upload { width: 24px; height: 24px; }
-  .console-msg-list { max-height: 70px; }
-  .console-msg-list-items { padding: 4px 8px 4px; }
-  .message-wall-float { height: 150px; }
-  .message-wall-container { border-width: 2px; }
-}
 </style>
 </head>
 <body>
@@ -2734,7 +2256,7 @@ body::after {
       <button class="book-viewer-nav next" id="bookViewerNext">›</button>
       <div class="book-viewer-content" id="bookViewerContent">
         <img class="book-viewer-img" id="bookViewerImg" src="" alt="">
-        <video class="book-viewer-video" id="bookViewerVideo" muted autoplay controls playsinline></video>
+        <video class="book-viewer-video" id="bookViewerVideo" muted controls playsinline preload="metadata"></video>
       </div>
     </div>
   </div>
@@ -2771,53 +2293,6 @@ body::after {
   </section>
 
   <!-- ============================================
-       501飘屏留言墙
-       ============================================ -->
-  <section class="message-wall-section">
-    <div class="section-label">501 留言墙</div>
-    <div class="message-wall-container" id="messageWallContainer">
-      <!-- 飘屏区 -->
-      <div class="message-wall-float" id="messageWallFloat">
-        <!-- JS 动态生成轨道 -->
-      </div>
-      <!-- 控制台 -->
-      <div class="message-wall-console" id="messageWallConsole">
-        <div class="console-title-bar">
-          <span class="console-title-icon">💬</span>
-          <span class="console-title-text">发送留言</span>
-        </div>
-        <div class="console-inner">
-          <input type="text" class="msg-nickname" id="msgNickname" placeholder="昵称" maxlength="8">
-          <div class="avatar-selector" id="avatarSelector"></div>
-          <input type="text" class="msg-text-input" id="msgText" placeholder="说点什么..." maxlength="60">
-          <button class="book-btn msg-record-btn" id="msgRecordBtn" title="点击录制">🎤 点击录制</button>
-          <button class="book-btn msg-upload-btn" id="msgUploadBtn" title="上传音频">📁 上传</button>
-          <input type="file" id="msgAudioInput" accept="audio/mp3,audio/wav,audio/ogg,audio/mpeg,audio/webm" style="display:none">
-          <button class="book-btn msg-send-btn" id="msgSendBtn">发送</button>
-          <select class="msg-speed-select" id="msgSpeedSelect" title="飘屏速度">
-            <option value="6">快速</option>
-            <option value="10" selected>正常</option>
-            <option value="16">慢速</option>
-            <option value="24">极慢</option>
-          </select>
-          <select class="msg-opacity-select" id="msgOpacitySelect" title="气泡透明度">
-            <option value="1">不透明</option>
-            <option value="0.85" selected>微透</option>
-            <option value="0.65">半透</option>
-            <option value="0.45">轻透</option>
-          </select>
-        </div>
-        <!-- 已发送留言列表 -->
-        <div class="console-msg-list">
-          <div class="console-msg-list-header">📋 已发送留言（点击预览 / ✕ 删除）</div>
-          <div class="console-msg-list-items" id="consoleMsgItems"></div>
-        </div>
-      </div>
-    </div>
-  </section>
-  <input type="file" id="msgAvatarInput" accept="image/*" style="display:none">
-
-  <!-- ============================================
        底部信息区
        ============================================ -->
   <footer class="footer">
@@ -2834,6 +2309,40 @@ body::after {
 </div><!-- /page-wrapper -->
 
 <script>
+// ===== 兜底保护：无论发生什么，4 秒后强制关闭加载画面 =====
+(function() {
+  setTimeout(function() {
+    var ls = document.getElementById('loading-screen');
+    if (ls && !ls.classList.contains('hidden')) {
+      ls.classList.add('hidden');
+      setTimeout(function() { if (ls && ls.parentNode) ls.remove(); }, 600);
+      console.warn('⚠ 加载画面已由兜底机制强制关闭');
+    }
+  }, 4000);
+})();
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+/* ============================================
+   Supabase 客户端初始化 (安全懒加载模式)
+   CDN 异步加载，不阻塞页面；加载完成后自动可用
+   ============================================ */
+let _supabase = null;
+function getSupabase() {
+  if (!_supabase && window.supabase) {
+    try {
+      _supabase = window.supabase.createClient(
+        'https://behrzhqqghhtjbtxhp.supabase.co',
+        'sb_publishable_EZXYKGIC4GllhJ5yZZAasA_Gj63eH2t'
+      );
+      console.log('✓ Supabase 已连接');
+    } catch(e) {
+      console.warn('⚠ Supabase 初始化失败:', e.message);
+    }
+  }
+  return _supabase;
+}
+
 /* ============================================
    成员数据配置
      将6位成员的照片放入 images/ 文件夹：
@@ -2917,6 +2426,16 @@ const albumData = [
   { type: 'photo', url: 'images/gallery3.jpg', caption: '课余时光' },
   { type: 'photo', url: 'images/gallery4.jpg', caption: '宿舍聚餐' },
   { type: 'photo', url: 'images/gallery5.jpg', caption: '宿舍集体合照' },
+  { type: 'photo', url: 'images/gallery6.jpg', caption: '日常照片' },
+  { type: 'video', url: 'images/gallery-video1.mp4', caption: '日常视频' },
+  { type: 'photo', url: 'images/gallery7.jpg', caption: '宿舍生活' },
+  { type: 'photo', url: 'images/gallery8.jpg', caption: '宿舍生活' },
+  { type: 'photo', url: 'images/gallery9.jpg', caption: '宿舍生活' },
+  { type: 'photo', url: 'images/gallery10.jpg', caption: '宿舍生活' },
+  { type: 'photo', url: 'images/gallery11.jpg', caption: '宿舍生活' },
+  { type: 'video', url: 'images/gallery-video2.mp4', caption: '宿舍视频' },
+  { type: 'video', url: 'images/gallery-video3.mp4', caption: '宿舍视频' },
+  { type: 'video', url: 'images/gallery-video4.mp4', caption: '宿舍视频' },
 ];
 
 /* ============================================
@@ -2927,92 +2446,99 @@ let musicCurrentIndex = -1;
 let musicIsPlaying = false;
 let musicProgressDragging = false;
 
-// ---- IndexedDB 音乐持久化 ----
-const MUSIC_DB_NAME = 'Dorm501Music';
-const MUSIC_DB_VERSION = 1;
-
-function openMusicDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(MUSIC_DB_NAME, MUSIC_DB_VERSION);
-    req.onupgradeneeded = (e) => {
-      const db = e.target.result;
-      if (!db.objectStoreNames.contains('songs')) {
-        db.createObjectStore('songs', { keyPath: 'id' });
-      }
-    };
-    req.onsuccess = (e) => resolve(e.target.result);
-    req.onerror = (e) => reject(e.target.error);
-  });
-}
-
+// ---- Supabase 音乐持久化 ----
 async function saveSongToDB(song) {
+  const supabase = getSupabase();
+  if (!supabase) { console.warn('Supabase 不可用，跳过歌曲保存'); return null; }
   try {
-    const db = await openMusicDB();
-    const tx = db.transaction('songs', 'readwrite');
-    tx.objectStore('songs').put(song);
-    await new Promise(r => { tx.oncomplete = r; });
-    // 同步保存元数据到 localStorage
-    saveMusicMeta();
-  } catch(e) { console.warn('音乐保存失败:', e); }
+    const ext = (song.name.split('.').pop() || 'mp3').replace(/[^a-z0-9]/gi, '');
+    const filePath = 'public/' + song.id + '.' + ext;
+    const { error: uploadErr } = await supabase.storage
+      .from('music-files')
+      .upload(filePath, song.file, { upsert: true, contentType: song.file.type || 'audio/mpeg' });
+    if (uploadErr) throw uploadErr;
+
+    const fileUrl = 'https://behrzhqqghhtjbtxhp.supabase.co/storage/v1/object/public/music-files/' + filePath;
+
+    const { error } = await supabase.from('songs').insert({
+      id: song.id,
+      name: song.name,
+      file_url: fileUrl,
+      duration: song.duration || 0
+    });
+    if (error) throw error;
+
+    return fileUrl;
+  } catch(e) {
+    console.warn('音乐保存失败:', e);
+    alert('音乐上传失败: ' + (e.message || '未知错误'));
+    return null;
+  }
 }
 
 async function loadSongsFromDB() {
+  const supabase = getSupabase();
+  if (!supabase) { console.warn('Supabase 不可用，跳过加载歌单'); return []; }
   try {
-    const db = await openMusicDB();
-    const tx = db.transaction('songs', 'readonly');
-    const songs = await new Promise(r => {
-      const req = tx.objectStore('songs').getAll();
-      req.onsuccess = () => r(req.result);
-    });
-    return songs;
-  } catch(e) { return []; }
+    const { data, error } = await supabase
+      .from('songs')
+      .select('*')
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    return data || [];
+  } catch(e) {
+    console.warn('加载歌单失败:', e);
+    alert('加载歌单失败: ' + (e.message || '请检查网络连接'));
+    return [];
+  }
 }
 
 async function deleteSongFromDB(id) {
+  const supabase = getSupabase();
+  if (!supabase) { console.warn('Supabase 不可用，跳过歌曲删除'); return; }
   try {
-    const db = await openMusicDB();
-    const tx = db.transaction('songs', 'readwrite');
-    tx.objectStore('songs').delete(id);
-    await new Promise(r => { tx.oncomplete = r; });
-    saveMusicMeta();
-  } catch(e) {}
-}
+    const { data, error: fetchErr } = await supabase.from('songs').select('file_url').eq('id', id).single();
+    if (fetchErr && fetchErr.code !== 'PGRST116') throw fetchErr;
 
-function saveMusicMeta() {
-  try {
-    const meta = musicPlaylist.map(s => ({ id: s.id, name: s.name, duration: s.duration }));
-    localStorage.setItem('musicPlaylistMeta', JSON.stringify(meta));
-  } catch(e) {}
+    const { error } = await supabase.from('songs').delete().eq('id', id);
+    if (error) throw error;
+
+    if (data && data.file_url) {
+      const pathMatch = data.file_url.match(/\/music-files\/(.+)$/);
+      if (pathMatch) {
+        await supabase.storage.from('music-files').remove([pathMatch[1]]);
+      }
+    }
+  } catch(e) {
+    console.warn('歌曲删除失败:', e);
+    alert('歌曲删除失败: ' + (e.message || '未知错误'));
+  }
 }
 
 async function loadMusicFromStorage() {
-  // 先从 localStorage 加载元数据（快速显示列表）
-  const metaStr = localStorage.getItem('musicPlaylistMeta');
-  const meta = metaStr ? JSON.parse(metaStr) : [];
-
-  // 从 IndexedDB 加载实际音频文件
   const songs = await loadSongsFromDB();
-  const songMap = {};
-  songs.forEach(s => { songMap[s.id] = s; });
 
-  meta.forEach(m => {
-    const saved = songMap[m.id];
-    if (saved && saved.blob) {
-      musicPlaylist.push({
-        id: m.id,
-        name: m.name,
-        url: URL.createObjectURL(saved.blob),
-        duration: m.duration
-      });
-    } else {
-      // 元数据存在但 blob 丢失（可能是其他设备）
-      musicPlaylist.push({
-        id: m.id,
-        name: m.name + ' (无文件)',
-        url: '',
-        duration: m.duration
-      });
-    }
+  songs.forEach(s => {
+    musicPlaylist.push({
+      id: s.id,
+      name: s.name,
+      url: s.file_url,
+      duration: s.duration
+    });
+  });
+
+  // 本地默认歌曲（内置，不依赖网络）
+  musicPlaylist.push({
+    id: 'builtin_1',
+    name: '张卫 - 机器铃 砍菜刀',
+    url: 'music/张卫 - 机器铃 砍菜刀.mp3',
+    duration: 0
+  });
+  musicPlaylist.push({
+    id: 'builtin_2',
+    name: '写给焜哥的歌',
+    url: 'music/写给焜哥的歌.m4a',
+    duration: 0
   });
 
   if (musicPlaylist.length > 0) {
@@ -3020,7 +2546,6 @@ async function loadMusicFromStorage() {
     updateMusicButtonStates();
     // 加载第一首但不自动播放
     loadMusicTrack(0);
-    // 暂停（只是加载，不播放）
     const audio = getMusicAudio();
     if (audio) { audio.pause(); musicIsPlaying = false; }
   }
@@ -3057,6 +2582,7 @@ function formatMusicTime(seconds) {
 // ---- 渲染书本页面 ----
 function renderBookPages(direction) {
   totalPages = Math.max(1, Math.ceil(albumData.length / ITEMS_PER_PAGE));
+  // 边界修正
   if (bookCurrentPage >= totalPages) bookCurrentPage = totalPages - 1;
   if (bookCurrentPage < 0) bookCurrentPage = 0;
 
@@ -3073,13 +2599,23 @@ function renderBookPages(direction) {
   const footerPrev = document.getElementById('bookFooterPrev');
   const footerNext = document.getElementById('bookFooterNext');
 
-  // 翻页过渡动画
+  // 翻页过渡动画 — 双向都加动画类
   if (direction) {
-    leftPage.classList.add('page-turning', direction === 'next' ? 'page-turning-out' : '');
-    rightPage.classList.add('page-turning', direction === 'next' ? 'page-turning-out' : '');
+    leftPage.classList.add('page-turning', 'page-turning-out');
+    rightPage.classList.add('page-turning', 'page-turning-out');
+    // 根据方向修正旋转方向：prev 时反向折叠
+    if (direction === 'prev') {
+      leftPage.style.setProperty('--fold-dir', '1');
+      rightPage.style.setProperty('--fold-dir', '1');
+    } else {
+      leftPage.style.setProperty('--fold-dir', '-1');
+      rightPage.style.setProperty('--fold-dir', '-1');
+    }
     setTimeout(() => {
       leftPage.classList.remove('page-turning', 'page-turning-out');
       rightPage.classList.remove('page-turning', 'page-turning-out');
+      leftPage.style.removeProperty('--fold-dir');
+      rightPage.style.removeProperty('--fold-dir');
     }, 220);
   }
 
@@ -3115,11 +2651,13 @@ function renderBookPages(direction) {
     });
   }
 
-  // 翻页箭头按钮状态
-  if (pagePrev) pagePrev.disabled = bookCurrentPage <= 0;
-  if (pageNext) pageNext.disabled = bookCurrentPage >= totalPages - 1;
-  if (footerPrev) footerPrev.disabled = bookCurrentPage <= 0;
-  if (footerNext) footerNext.disabled = bookCurrentPage >= totalPages - 1;
+  // 翻页按钮禁用状态
+  const isFirstPage = bookCurrentPage <= 0;
+  const isLastPage = bookCurrentPage >= totalPages - 1;
+  if (pagePrev)  { pagePrev.disabled  = isFirstPage; pagePrev.style.pointerEvents  = isFirstPage ? 'none' : 'auto'; }
+  if (pageNext)  { pageNext.disabled  = isLastPage;  pageNext.style.pointerEvents  = isLastPage  ? 'none' : 'auto'; }
+  if (footerPrev) { footerPrev.disabled = isFirstPage; }
+  if (footerNext) { footerNext.disabled = isLastPage;  }
 
   // 翻页圆点
   pagination.innerHTML = '';
@@ -3144,8 +2682,10 @@ function buildBookThumb(item, index) {
   thumb.style.animationDelay = (index % ITEMS_PER_PAGE) * 0.06 + 's';
   if (item.type === 'video') {
     thumb.innerHTML = `
-      <img src="${item.url + '#t=0.1'}" alt="${item.caption}" loading="lazy"
-        onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22><rect fill=%22%23E8E0D3%22 width=%22400%22 height=%22300%22/><text x=%22200%22 y=%22155%22 text-anchor=%22middle%22 fill=%22%231A365D%22 font-size=%2214%22>🎬 视频</text></svg>'">
+      <video src="${item.url}" preload="metadata" muted playsinline
+        onloadedmetadata="this.currentTime=0.5;this.pause()"
+        onerror="this.style.display='none'"
+        style="width:100%;height:100%;object-fit:cover;pointer-events:none"></video>
       <div class="book-thumb-video-icon"></div>
     `;
   } else {
@@ -3222,7 +2762,7 @@ function loadBookViewerItem() {
       img.style.display = 'none';
       video.style.display = 'block';
       video.src = item.url;
-      video.play().catch(() => {});
+      video.load();
     } else {
       video.style.display = 'none'; video.pause(); video.src = '';
       img.style.display = 'block'; img.src = item.url; img.alt = item.caption;
@@ -3485,43 +3025,66 @@ function initMusicUpload() {
     }
   });
 
-  fileInput.addEventListener('change', function() {
+  fileInput.addEventListener('change', async function() {
     const files = Array.from(this.files);
     if (!files.length) return;
 
-    files.forEach(file => {
-      const url = URL.createObjectURL(file);
+    const uploadBtn = document.getElementById('musicBtnUpload');
+    const originalText = uploadBtn.textContent;
+
+    for (const file of files) {
       const name = file.name.replace(/\.[^/.]+$/, '');
+      const songId = 'song_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
 
-      const tempAudio = new Audio();
-      tempAudio.preload = 'metadata';
-      tempAudio.src = url;
-      tempAudio.addEventListener('loadedmetadata', () => {
-        musicPlaylist.push({
-          name: name,
-          url: url,
-          duration: tempAudio.duration
-        });
-        renderMusicPlaylist();
-        updateMusicButtonStates();
-        if (musicPlaylist.length === 1) {
-          loadMusicTrack(0);
-        }
-      });
-      tempAudio.addEventListener('error', () => {
-        musicPlaylist.push({
-          name: name,
-          url: url,
-          duration: 0
-        });
-        renderMusicPlaylist();
-        updateMusicButtonStates();
-        if (musicPlaylist.length === 1) {
-          loadMusicTrack(0);
-        }
-      });
-    });
+      uploadBtn.textContent = '上传中...';
+      uploadBtn.disabled = true;
 
+      // 临时本地 URL 用于获取时长
+      const blobUrl = URL.createObjectURL(file);
+      const duration = await new Promise(resolve => {
+        const tempAudio = new Audio();
+        tempAudio.preload = 'metadata';
+        tempAudio.src = blobUrl;
+        tempAudio.addEventListener('loadedmetadata', () => resolve(tempAudio.duration || 0));
+        tempAudio.addEventListener('error', () => resolve(0));
+        setTimeout(() => resolve(0), 3000);
+      });
+
+      // 上传到 Supabase Storage
+      const uploadedUrl = await saveSongToDB({
+        id: songId,
+        name: name,
+        file: file,
+        duration: duration
+      });
+
+      if (uploadedUrl) {
+        URL.revokeObjectURL(blobUrl);
+        musicPlaylist.push({
+          id: songId,
+          name: name,
+          url: uploadedUrl,
+          duration: duration
+        });
+      } else {
+        // 上传失败降级：使用本地 blob URL
+        musicPlaylist.push({
+          id: songId,
+          name: name + ' (仅本地)',
+          url: blobUrl,
+          duration: duration
+        });
+      }
+
+      renderMusicPlaylist();
+      updateMusicButtonStates();
+      if (musicPlaylist.length === 1) {
+        loadMusicTrack(0);
+      }
+    }
+
+    uploadBtn.textContent = originalText;
+    uploadBtn.disabled = false;
     fileInput.value = '';
   });
 }
@@ -3651,542 +3214,13 @@ function initMusicModule() {
   initMusicProgressDrag();
   renderMusicPlaylist();
   updateMusicButtonStates();
-  // 从 IndexedDB 恢复已上传音乐
+  // 从 Supabase 恢复已上传音乐
   loadMusicFromStorage();
 
   // 点击唱片切换播放/暂停
   document.getElementById('vinylRecord').addEventListener('click', (e) => {
     e.stopPropagation();
     toggleMusicPlay();
-  });
-}
-
-/* ============================================
-   501飘屏留言墙 - 完整功能
-   ============================================ */
-
-const messageData = [];              // { id, nickname, avatar, text, audioBlob, audioUrl }
-const messageLanes = [null, null, null, null, null];
-let messageIdCounter = 0;
-let selectedAvatar = 'images/cartoon1.jpg';
-let recordedBlob = null;
-let recordedUrl = null;
-let currentMsgAudio = null;
-
-// ---- 构建头像选择器 ----
-function initAvatarSelector() {
-  const container = document.getElementById('avatarSelector');
-  const presets = [
-    'images/cartoon1.jpg', 'images/cartoon2.jpg', 'images/cartoon3.jpg',
-    'images/cartoon4.jpg', 'images/cartoon5.jpg', 'images/member1.jpg'
-  ];
-
-  presets.forEach((src, i) => {
-    const img = document.createElement('img');
-    img.className = 'avatar-option' + (i === 0 ? ' selected' : '');
-    img.src = src;
-    img.addEventListener('click', () => {
-      container.querySelectorAll('.avatar-option').forEach(o => o.classList.remove('selected'));
-      img.classList.add('selected');
-      selectedAvatar = src;
-    });
-    container.appendChild(img);
-  });
-
-  // 自定义上传
-  const upload = document.createElement('div');
-  upload.className = 'avatar-upload';
-  upload.textContent = '+';
-  upload.title = '上传头像';
-  upload.addEventListener('click', () => {
-    document.getElementById('msgAvatarInput').click();
-  });
-  container.appendChild(upload);
-
-  document.getElementById('msgAvatarInput').addEventListener('change', function() {
-    const file = this.files[0];
-    if (!file) return;
-    const url = URL.createObjectURL(file);
-    const img = document.createElement('img');
-    img.className = 'avatar-option selected';
-    img.src = url;
-    container.querySelectorAll('.avatar-option').forEach(o => o.classList.remove('selected'));
-    // 插入在上传按钮之前
-    const existCustom = container.querySelector('.avatar-custom');
-    if (existCustom) existCustom.remove();
-    img.classList.add('avatar-custom');
-    container.insertBefore(img, upload);
-    selectedAvatar = url;
-    this.value = '';
-  });
-}
-
-// ---- 语音录制 ----
-const RECORD_STATE = { IDLE: 'idle', RECORDING: 'recording', RECORDED: 'recorded' };
-let recordState = RECORD_STATE.IDLE;
-let recordTimeout = null;
-let mediaRecorder = null;
-let mediaStream = null;
-
-function setRecordState(state) {
-  recordState = state;
-  const btn = document.getElementById('msgRecordBtn');
-  // 清除旧的超时
-  if (recordTimeout) { clearTimeout(recordTimeout); recordTimeout = null; }
-
-  switch (state) {
-    case RECORD_STATE.IDLE:
-      btn.textContent = '🎤 点击录制';
-      btn.classList.remove('recording', 'recorded');
-      break;
-    case RECORD_STATE.RECORDING:
-      btn.textContent = '⏺ 正在录制';
-      btn.classList.add('recording');
-      btn.classList.remove('recorded');
-      break;
-    case RECORD_STATE.RECORDED:
-      btn.textContent = '🔊 已录制';
-      btn.classList.remove('recording');
-      btn.classList.add('recorded');
-      // 2分钟无操作自动清除
-      recordTimeout = setTimeout(() => {
-        clearRecordedAudio();
-        setRecordState(RECORD_STATE.IDLE);
-      }, 120000);
-      break;
-  }
-}
-
-function clearRecordedAudio() {
-  // 注意：不在这里 revoke URL，因为消息可能还在使用
-  // URL 会在 removeMessage 或 animationend 时被 revoke
-  recordedUrl = null;
-  recordedBlob = null;
-  if (mediaStream) {
-    mediaStream.getTracks().forEach(t => t.stop());
-    mediaStream = null;
-  }
-  mediaRecorder = null;
-}
-
-function initVoiceRecord() {
-  const btn = document.getElementById('msgRecordBtn');
-  let chunks = [];
-
-  // 点击模式：第1次开始录制，第2次停止录制
-  btn.addEventListener('click', async () => {
-    if (recordState === RECORD_STATE.IDLE) {
-      // 开始录制
-      try {
-        mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(mediaStream, { mimeType: 'audio/webm' });
-        chunks = [];
-        mediaRecorder.ondataavailable = e => chunks.push(e.data);
-        mediaRecorder.onstop = () => {
-          recordedBlob = new Blob(chunks, { type: 'audio/webm' });
-          if (recordedUrl) URL.revokeObjectURL(recordedUrl);
-          recordedUrl = URL.createObjectURL(recordedBlob);
-          mediaStream.getTracks().forEach(t => t.stop());
-          mediaStream = null;
-          setRecordState(RECORD_STATE.RECORDED);
-        };
-        // 监听麦克风权限被撤销
-        mediaStream.getAudioTracks().forEach(track => {
-          track.onended = () => {
-            if (recordState === RECORD_STATE.RECORDING) {
-              mediaRecorder.stop();
-              alert('录制中断，请重新授权麦克风');
-              clearRecordedAudio();
-              setRecordState(RECORD_STATE.IDLE);
-            }
-          };
-        });
-        mediaRecorder.start();
-        setRecordState(RECORD_STATE.RECORDING);
-      } catch (err) {
-        alert('无法访问麦克风: ' + err.message);
-        setRecordState(RECORD_STATE.IDLE);
-      }
-    } else if (recordState === RECORD_STATE.RECORDING) {
-      // 停止录制
-      if (mediaRecorder && mediaRecorder.state === 'recording') {
-        mediaRecorder.stop();
-      }
-    }
-    // RECORDED 状态下点击不做任何事（需先发送或手动清除）
-  });
-
-  // 音频文件上传
-  document.getElementById('msgUploadBtn').addEventListener('click', () => {
-    document.getElementById('msgAudioInput').click();
-  });
-  document.getElementById('msgAudioInput').addEventListener('change', function() {
-    const file = this.files[0];
-    if (!file) return;
-    clearRecordedAudio();
-    recordedBlob = file;
-    recordedUrl = URL.createObjectURL(file);
-    setRecordState(RECORD_STATE.RECORDED);
-    this.value = '';
-  });
-}
-
-// ---- 轨道管理 ----
-function createMessageLanes() {
-  const wall = document.getElementById('messageWallFloat');
-  wall.innerHTML = '';
-  for (let i = 0; i < 5; i++) {
-    const lane = document.createElement('div');
-    lane.className = 'message-lane';
-    lane.style.top = (i * 20) + '%';
-    lane.id = 'messageLane' + i;
-    wall.appendChild(lane);
-  }
-}
-
-function assignLane() {
-  for (let i = 0; i < messageLanes.length; i++) {
-    if (!messageLanes[i]) return i;
-  }
-  return -1;
-}
-
-// ---- 发送留言 ----
-function sendMessage() {
-  const nickname = document.getElementById('msgNickname').value.trim() || '匿名';
-  const text = document.getElementById('msgText').value.trim();
-  const hasVoice = !!recordedUrl;
-
-  if (!text && !hasVoice) {
-    document.getElementById('msgText').placeholder = '请先输入文字或录制语音';
-    setTimeout(() => { document.getElementById('msgText').placeholder = '说点什么...'; }, 1500);
-    return;
-  }
-
-  const msg = {
-    id: ++messageIdCounter,
-    nickname: nickname,
-    avatar: selectedAvatar,
-    text: text || '[语音留言]',
-    audioBlob: recordedBlob,
-    audioUrl: recordedUrl
-  };
-
-  // 添加到数据（永久保留）
-  messageData.push(msg);
-  saveMessagesToStorage();
-
-  // 尝试显示飘屏
-  const spawned = spawnMessage(msg);
-
-  // 无论是否上墙，数据已保留，控制台列表必须刷新
-  renderConsoleMsgList();
-
-  if (!spawned) {
-    alert('飘屏轨道已满，留言已保存，请稍后重试发送');
-    return;
-  }
-
-  // 发送成功 → 只重置录制状态，不动留言数据
-  document.getElementById('msgText').value = '';
-  clearRecordedAudio();
-  setRecordState(RECORD_STATE.IDLE);
-}
-
-// ---- 存储持久化（localStorage 主存储，可靠不丢数据） ----
-function saveMessagesToStorage() {
-  try {
-    const data = messageData.map(m => ({
-      id: m.id,
-      nickname: m.nickname,
-      avatar: m.avatar,
-      text: m.text,
-      hasVoice: !!m.audioUrl
-    }));
-    localStorage.setItem('msgWallData', JSON.stringify(data));
-    localStorage.setItem('msgWallIdCounter', messageIdCounter);
-  } catch(e) { /* 静默降级 */ }
-}
-
-function loadMessagesFromStorage() {
-  try {
-    const saved = localStorage.getItem('msgWallData');
-    if (!saved) return;
-    const data = JSON.parse(saved);
-    messageIdCounter = parseInt(localStorage.getItem('msgWallIdCounter')) || 0;
-
-    data.forEach(item => {
-      messageData.push({
-        id: item.id,
-        nickname: item.nickname,
-        avatar: item.avatar,
-        text: item.text + (item.hasVoice ? '' : ''),
-        audioBlob: null,
-        audioUrl: null
-      });
-    });
-
-    messageData.forEach(msg => { spawnMessage(msg); });
-    renderConsoleMsgList();
-  } catch(e) { /* 静默降级 */ }
-}
-
-// ---- 生成漂浮留言 ----
-function spawnMessage(msg) {
-  const laneIdx = assignLane();
-  if (laneIdx < 0) return false;
-
-  const lane = document.getElementById('messageLane' + laneIdx);
-  const baseSpeed = parseFloat(document.getElementById('msgSpeedSelect').value) || 12;
-  // 随机速度微调 ±20%
-  const speedVariation = baseSpeed * (0.8 + Math.random() * 0.4);
-  const speed = speedVariation.toFixed(1);
-  const opacity = document.getElementById('msgOpacitySelect').value || 0.85;
-
-  const bubble = document.createElement('div');
-  bubble.className = 'message-bubble';
-  bubble.setAttribute('data-id', msg.id);
-  bubble.style.setProperty('--drift-dur', speed + 's');
-  bubble.style.opacity = opacity;
-
-  bubble.innerHTML = `
-    <span class="msg-avatar-wrap" style="position:relative;flex-shrink:0">
-      <img class="msg-avatar" src="${msg.avatar}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 36 36%22><circle cx=%2218%22 cy=%2218%22 r=%2218%22 fill=%22%23E8E0D3%22/></svg>'">
-      <span class="msg-play-indicator"></span>
-    </span>
-    <span class="msg-nick">${msg.nickname}</span>
-    ${msg.audioUrl ? `<button class="msg-play-btn" title="播放语音">▶</button>` : ''}
-    ${msg.audioUrl ? `<div class="msg-waveform">${'<div class="msg-wave-bar" style="height:'+(6+Math.random()*12)+'px"></div>'.repeat(5)}</div>` : ''}
-    <span class="msg-text">${msg.text}</span>
-    <button class="msg-delete-btn" title="删除">✕</button>
-  `;
-
-  // 删除按钮
-  bubble.querySelector('.msg-delete-btn').addEventListener('click', (e) => {
-    e.stopPropagation();
-    removeMessage(msg.id, laneIdx);
-  });
-
-  // 播放按钮
-  if (msg.audioUrl) {
-    const playBtn = bubble.querySelector('.msg-play-btn');
-    const waveform = bubble.querySelector('.msg-waveform');
-    const indicator = bubble.querySelector('.msg-play-indicator');
-
-	    playBtn.addEventListener('click', (e) => {
-	      e.stopPropagation();
-	      if (currentMsgAudio && currentMsgAudio.dataset.msgId === String(msg.id)) {
-	        if (!currentMsgAudio.paused) {
-	          currentMsgAudio.pause();
-	          playBtn.textContent = '▶';
-	          waveform.classList.remove('active');
-	          indicator.classList.remove('active');
-	          bubble.classList.remove('playing');
-	          // 暂停 → 立即恢复漂流
-	          unfreezeBubblePosition(bubble);
-	          return;
-	        } else {
-	          // 恢复播放 → 重新冻结位置
-	          freezeBubblePosition(bubble);
-	          currentMsgAudio.play().catch(() => {});
-	          playBtn.textContent = '⏸';
-	          waveform.classList.add('active');
-	          indicator.classList.add('active');
-	          bubble.classList.add('playing');
-	          return;
-	        }
-	      }
-	      freezeBubblePosition(bubble);
-	      playMessageVoice(msg, playBtn, waveform, indicator, bubble);
-	    });
-  }
-
-  // 点击气泡暂停漂浮
-  let pauseTimer = null;
-  bubble.addEventListener('click', () => {
-    if (bubble.style.animationPlayState === 'paused') {
-      bubble.style.animationPlayState = 'running';
-      clearTimeout(pauseTimer);
-    } else {
-      bubble.style.animationPlayState = 'paused';
-      pauseTimer = setTimeout(() => {
-        bubble.style.animationPlayState = 'running';
-      }, 3000);
-    }
-  });
-
-	  // 动画结束 → 循环重新飘入（留言永久常驻）
-	  bubble.addEventListener("animationend", (e) => {
-	    if (e.target !== bubble) return;
-	    if (e.animationName !== "drift-left") return;
-	    // 重置动画实现循环滚动
-	    bubble.style.animation = "none";
-	    bubble.offsetHeight; // 强制回流
-	    bubble.style.animation = "";
-	  });
-
-  lane.appendChild(bubble);
-  messageLanes[laneIdx] = bubble;
-  return true;
-}
-
-// ---- 冻结气泡位置 ----
-function freezeBubblePosition(bubble) {
-  // 获取当前计算位置，固定为 inline style
-  const computed = getComputedStyle(bubble);
-  bubble.style.left = computed.left;
-  bubble.style.animation = 'none';
-}
-
-
-// ---- 播放留言语音 ----
-function playMessageVoice(msg, playBtn, waveform, indicator, bubble) {
-  if (currentMsgAudio) {
-    currentMsgAudio.pause();
-    currentMsgAudio.src = '';
-  }
-
-  const audio = new Audio(msg.audioUrl);
-  audio.dataset.msgId = String(msg.id);
-  currentMsgAudio = audio;
-  waveform.classList.add('active');
-  indicator.classList.add('active');
-  bubble.classList.add('playing');
-  playBtn.textContent = '⏸';
-
-  audio.addEventListener('play', () => {
-    waveform.classList.add('active');
-    indicator.classList.add('active');
-    bubble.classList.add('playing');
-    playBtn.textContent = '⏸';
-  });
-
-  audio.addEventListener('pause', () => {
-    waveform.classList.remove('active');
-    indicator.classList.remove('active');
-    bubble.classList.remove('playing');
-    playBtn.textContent = '▶';
-  });
-
-  audio.addEventListener('ended', () => {
-    waveform.classList.remove('active');
-    indicator.classList.remove('active');
-    bubble.classList.remove('playing');
-    playBtn.textContent = '▶';
-    currentMsgAudio = null;
-    // 播放完毕 → 渐变淡出消失
-    unfreezeBubblePosition(bubble);
-  });
-
-  audio.play().catch(err => {
-    console.warn('语音播放失败:', err);
-    waveform.classList.remove('active');
-    indicator.classList.remove('active');
-    bubble.classList.remove('playing');
-    playBtn.textContent = '▶';
-  });
-}
-
-// ---- 解除驻留，恢复循环滚动 ----
-function unfreezeBubblePosition(bubble) {
-  // 清除冻结时的 inline style，让 CSS 动画重新接管
-  bubble.style.left = '';
-  bubble.style.animation = '';
-}
-
-
-// ---- 删除留言 ----
-function removeMessage(id, laneIdx) {
-  messageLanes[laneIdx] = null;
-  const idx = messageData.findIndex(m => m.id === id);
-  if (idx >= 0) {
-    const msg = messageData[idx];
-    if (msg.audioUrl) URL.revokeObjectURL(msg.audioUrl);
-    messageData.splice(idx, 1);
-  }
-  saveMessagesToStorage();
-  // 停止播放
-  if (currentMsgAudio && currentMsgAudio.dataset.msgId === String(id)) {
-    currentMsgAudio.pause();
-    currentMsgAudio.src = '';
-    currentMsgAudio = null;
-  }
-  // 移除 DOM（在 lane 中查找）
-  const lane = document.getElementById('messageLane' + laneIdx);
-  if (lane) {
-    const bubble = lane.querySelector('[data-id="' + id + '"]');
-    if (bubble) bubble.remove();
-  }
-  renderConsoleMsgList();
-}
-
-// ---- 控制台留言列表 ----
-function renderConsoleMsgList() {
-  const container = document.getElementById('consoleMsgItems');
-  container.innerHTML = '';
-  if (messageData.length === 0) {
-    container.innerHTML = '<span style="font-size:10px;color:var(--text-light);opacity:0.4;letter-spacing:2px;">暂无留言</span>';
-    return;
-  }
-  messageData.forEach(msg => {
-    const item = document.createElement('div');
-    item.className = 'console-msg-item';
-    item.title = msg.nickname + ': ' + msg.text + (msg.audioUrl ? ' [语音]' : '');
-    item.innerHTML = `
-      <img class="cmi-avatar" src="${msg.avatar}" onerror="this.style.display='none'">
-      <span class="cmi-text">${msg.nickname}: ${msg.text}</span>
-      ${msg.audioUrl ? '<span style="font-size:10px">🔊</span>' : ''}
-      <button class="cmi-del">✕</button>
-    `;
-    item.querySelector('.cmi-del').addEventListener('click', (e) => {
-      e.stopPropagation();
-      // 找到并移除漂浮气泡
-      for (let i = 0; i < messageLanes.length; i++) {
-        if (messageLanes[i] && messageLanes[i].getAttribute('data-id') === String(msg.id)) {
-          removeMessage(msg.id, i);
-          break;
-        }
-      }
-      // 如果不在漂浮中，直接从 data 删除
-      const idx = messageData.findIndex(m => m.id === msg.id);
-      if (idx >= 0) {
-        if (messageData[idx].audioUrl) URL.revokeObjectURL(messageData[idx].audioUrl);
-        messageData.splice(idx, 1);
-        saveMessagesToStorage();
-      }
-      renderConsoleMsgList();
-    });
-    item.addEventListener('click', () => {
-      // 点击预览：滚动到对应漂浮留言并暂停
-      for (let i = 0; i < messageLanes.length; i++) {
-        if (messageLanes[i] && messageLanes[i].getAttribute('data-id') === String(msg.id)) {
-          const bubble = messageLanes[i];
-          bubble.style.animationPlayState = 'paused';
-          bubble.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          setTimeout(() => { bubble.style.animationPlayState = 'running'; }, 3000);
-          break;
-        }
-      }
-    });
-    container.appendChild(item);
-  });
-}
-
-// ---- 主初始化 ----
-function initMessageWall() {
-  createMessageLanes();
-  initAvatarSelector();
-  initVoiceRecord();
-  loadMessagesFromStorage();
-
-  document.getElementById('msgSendBtn').addEventListener('click', sendMessage);
-  document.getElementById('msgText').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') sendMessage();
-  });
-
-  // 页面关闭/刷新时清理录制资源
-  window.addEventListener('beforeunload', () => {
-    clearRecordedAudio();
   });
 }
 
@@ -4488,7 +3522,6 @@ function init() {
   initAlbumUpload();
   initBookViewer();
   initMusicModule();
-  initMessageWall();
   initCustomCursor();
   initCardReveal();
   initScrollSway();

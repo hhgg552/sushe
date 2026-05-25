@@ -1,2 +1,3 @@
 .claude/
 *.tmp
+node_modules/
