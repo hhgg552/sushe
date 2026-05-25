@@ -16,6 +16,10 @@
     "type": "video"
   },
   {
+    "url": "images/gallery-video5.mp4",
+    "type": "video"
+  },
+  {
     "url": "images/gallery1.jpg",
     "type": "photo"
   },
@@ -25,6 +29,54 @@
   },
   {
     "url": "images/gallery11.jpg",
+    "type": "photo"
+  },
+  {
+    "url": "images/gallery12.jpg",
+    "type": "photo"
+  },
+  {
+    "url": "images/gallery13.jpg",
+    "type": "photo"
+  },
+  {
+    "url": "images/gallery14.jpg",
+    "type": "photo"
+  },
+  {
+    "url": "images/gallery15.jpg",
+    "type": "photo"
+  },
+  {
+    "url": "images/gallery16.jpg",
+    "type": "photo"
+  },
+  {
+    "url": "images/gallery17.jpg",
+    "type": "photo"
+  },
+  {
+    "url": "images/gallery18.jpg",
+    "type": "photo"
+  },
+  {
+    "url": "images/gallery19.jpg",
+    "type": "photo"
+  },
+  {
+    "url": "images/gallery20.jpg",
+    "type": "photo"
+  },
+  {
+    "url": "images/gallery21.jpg",
+    "type": "photo"
+  },
+  {
+    "url": "images/gallery22.jpg",
+    "type": "photo"
+  },
+  {
+    "url": "images/gallery23.jpg",
     "type": "photo"
   },
   {
@@ -48,7 +100,15 @@
     "type": "photo"
   },
   {
+    "url": "images/upload_0546d71b.jpg",
+    "type": "photo"
+  },
+  {
     "url": "images/upload_415e72c3.jpg",
+    "type": "photo"
+  },
+  {
+    "url": "images/upload_adfc7a33.jpg",
     "type": "photo"
   },
   {
