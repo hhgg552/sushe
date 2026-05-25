@@ -2544,10 +2544,17 @@ async function loadMusicFromStorage() {
   if (musicPlaylist.length > 0) {
     renderMusicPlaylist();
     updateMusicButtonStates();
-    // 加载第一首但不自动播放
     loadMusicTrack(0);
+    // 尝试自动播放（浏览器可能拦截，由全局点击解锁）
     const audio = getMusicAudio();
-    if (audio) { audio.pause(); musicIsPlaying = false; }
+    if (audio) {
+      audio.play().then(() => {
+        musicIsPlaying = true;
+      }).catch(() => {
+        // 浏览器拦截自动播放，等待用户首次点击解锁
+        console.log('🎵 点击页面任意位置开始播放音乐');
+      });
+    }
   }
 }
 
@@ -3607,6 +3614,23 @@ function init() {
   loadAlbumFromServer();  // 从后端加载已上传的媒体文件
   initBookViewer();
   initMusicModule();
+
+  // 首次用户点击页面任意位置 → 解锁背景音乐自动播放
+  let musicUnlocked = false;
+  document.addEventListener('click', function unlockMusic() {
+    if (musicUnlocked) return;
+    const audio = getMusicAudio();
+    if (audio && audio.src && audio.paused) {
+      audio.play().then(() => {
+        musicIsPlaying = true;
+        document.getElementById('musicBtnPlay').innerHTML = '⏸';
+        setVinylSpinning(true);
+        musicUnlocked = true;
+        console.log('🎵 背景音乐已开始');
+      }).catch(() => {});
+    }
+  }, { once: false });
+
   initCustomCursor();
   initCardReveal();
   initScrollSway();
@@ -3626,7 +3650,7 @@ document.addEventListener('DOMContentLoaded', init);
 <button id="backToTop" title="回到顶部" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
 
 <!-- 隐藏音频播放器 -->
-<audio id="musicAudio" preload="metadata" style="display:none"></audio>
+<audio id="musicAudio" preload="metadata" loop style="display:none"></audio>
 
 </body>
 </html>
