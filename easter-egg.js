@@ -248,9 +248,12 @@
     hidePrompt();
     state = 'triggered';
 
-    // 文字动画与气球同步开始
-    showGraduationText();
-    startBalloons();
+    // 延迟一帧启动动画，避免资源释放的 DOM 操作（移除 video 元素）
+    // 与文字/气球创建在同一帧内造成布局抖动
+    requestAnimationFrame(() => {
+      showGraduationText();
+      startBalloons();
+    });
   }
 
   /* ========================================================
