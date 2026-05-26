@@ -2171,6 +2171,25 @@ body::after {
   75%      { transform: rotate(-2deg); }
 }
 
+/* 毕业祝福文字 —— 渐显出现 */
+@keyframes gradTextFadeIn {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
+  60%  { opacity: 0.9; transform: translate(-50%, -50%) scale(1.04); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* 毕业祝福文字 —— 缓慢上浮 */
+@keyframes gradTextFloat {
+  0%   { transform: translate(-50%, -50%); }
+  100% { transform: translate(-50%, -65%); }
+}
+
+/* 毕业祝福文字 —— 渐隐消失 */
+@keyframes gradTextFadeOut {
+  0%   { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 /* 气球容器 —— 无交互穿透 */
 #easterBalloonContainer {
   position: fixed;

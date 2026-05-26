@@ -26,6 +26,8 @@
   let balloonContainer = null;
   let balloonInterval = null;
   let balloonStopTimer = null;
+  let textOverlay = null;
+  let hasTriggered = false; // 防重复：一次页面生命周期只触发一次
 
   /* ========================================================
      1. 滚动检测 —— 仅到底部时触发
@@ -237,10 +239,17 @@
   }
 
   function onGestureDetected() {
-    // 立刻释放所有资源
+    // 防重复触发：已触发过则直接忽略后续识别结果
+    if (hasTriggered) return;
+    hasTriggered = true;
+
+    // 立刻释放摄像头与模型资源
     releaseResources();
     hidePrompt();
     state = 'triggered';
+
+    // 文字动画与气球同步开始
+    showGraduationText();
     startBalloons();
   }
 
@@ -433,12 +442,51 @@
   }
 
   /* ========================================================
+     8.5 毕业祝福文字动画 —— 与气球同步，渐显 → 上浮 → 渐隐
+     ======================================================== */
+  function showGraduationText() {
+    if (textOverlay) return;
+    textOverlay = document.createElement('div');
+    textOverlay.id = 'easterGraduationText';
+    textOverlay.textContent = '毕业快乐，前程似锦！';
+    textOverlay.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 9999;
+      font-size: 36px;
+      font-family: 'Noto Serif SC', 'STSong', 'SimSun', serif;
+      font-weight: bold;
+      color: #fff;
+      letter-spacing: 8px;
+      white-space: nowrap;
+      text-shadow:
+        0 2px 8px rgba(26, 54, 93, 0.5),
+        0 0 40px rgba(184, 151, 90, 0.3);
+      pointer-events: none;
+      animation: gradTextFadeIn 1.2s ease-out forwards,
+                 gradTextFloat 5s 1.2s ease-in-out forwards,
+                 gradTextFadeOut 1.5s 5.5s ease-in forwards;
+    `;
+    document.body.appendChild(textOverlay);
+
+    // 动画结束后清理 DOM（总时长 ≈ 1.2 + 5 + 1.5 ≈ 7.7s）
+    setTimeout(() => {
+      if (textOverlay && textOverlay.parentNode) {
+        textOverlay.parentNode.removeChild(textOverlay);
+        textOverlay = null;
+      }
+    }, 8000);
+  }
+
+  /* ========================================================
      9. 主流程 —— 滚动到底部后触发
      ======================================================== */
   let scrollDebounce = null;
 
   async function handleScroll() {
-    if (state === 'triggered' || state === 'denied') return;
+    if (hasTriggered || state === 'triggered' || state === 'denied') return;
     if (!isNearBottom()) return;
 
     // 进入提示状态
