@@ -1192,7 +1192,10 @@ body::after {
   background: rgba(26,54,93,0.2);
 }
 
-/* 书本底栏 */
+/* 书本底栏
+   - flex-shrink: 0 确保页脚始终在底部不被压缩
+   - gap 配合 flex-wrap 防止元素挤在一起
+   - min-height 保证即使内容为空也有可点击区域 */
 .book-footer {
   display: flex;
   align-items: center;
@@ -1203,12 +1206,21 @@ body::after {
   flex-shrink: 0;
   position: relative;
   z-index: 1;
+  gap: 10px;
+  min-height: 40px;
 }
 
+/* 分页圆点容器
+   - flex-wrap: wrap 是关键：27 个圆点也不会撑破父容器
+   - justify-content: center 让换行后的圆点居中不偏左
+   - max-width: 100% 确保不超出父级边界 */
 .book-pagination {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 100%;
 }
 
 .book-page-dot {
@@ -1290,11 +1302,17 @@ body::after {
   transform-origin: left center;
 }
 
-/* ---- 页脚翻页按钮组 ---- */
+/* 页脚翻页按钮组
+   - flex-shrink: 0 防止按钮被圆点区挤压变形
+   - flex-wrap: wrap 在空间不足时自动换行
+   - justify-content: flex-end 按钮靠右对齐 */
 .book-footer-nav {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 .book-footer-nav .book-btn {
   padding: 5px 12px;
@@ -2241,8 +2259,6 @@ body::after {
           <div class="book-pagination" id="bookPagination"></div>
           <div class="book-footer-nav">
             <button class="book-btn" id="bookFooterNext">下一页 ▶</button>
-            <button class="book-btn" id="bookUploadBtn">+ 上传</button>
-            <input type="file" id="albumFileInput" multiple accept="image/jpeg,image/png,video/mp4,image/gif,image/webp" style="display:none">
             <button class="book-btn" id="bookBackBtn">← 合上相册</button>
           </div>
         </div>
@@ -2635,7 +2651,7 @@ function renderBookPages(direction) {
   const pageItems = albumData.slice(start, end);
 
   if (pageItems.length === 0) {
-    leftGrid.innerHTML = '<div class="book-empty">这一页还是空的<br>点击「+ 上传」添加回忆</div>';
+    leftGrid.innerHTML = '<div class="book-empty">这一页还是空的<br>更多回忆即将添加</div>';
     rightGrid.innerHTML = '';
     leftTitle.textContent = '';
     rightTitle.textContent = '';
@@ -2890,62 +2906,6 @@ async function loadAlbumFromServer() {
   if (document.getElementById('bookOverlay').classList.contains('active')) {
     renderBookPages();
   }
-}
-
-// ---- 上传 ----
-function initAlbumUpload() {
-  const fileInput = document.getElementById('albumFileInput');
-  const uploadBtn = document.getElementById('bookUploadBtn');
-
-  uploadBtn.addEventListener('click', () => fileInput.click());
-
-  fileInput.addEventListener('change', async function() {
-    const files = Array.from(this.files);
-    if (!files.length) return;
-
-    const originalText = uploadBtn.textContent;
-    uploadBtn.textContent = '上传中...';
-    uploadBtn.disabled = true;
-
-    for (const file of files) {
-      // 尝试上传到 Flask 后端
-      let uploaded = false;
-      try {
-        const formData = new FormData();
-        formData.append('file', file);
-        const resp = await fetch('/upload', { method: 'POST', body: formData });
-        if (resp.ok) {
-          const data = await resp.json();
-          albumData.push({
-            type: data.type,
-            url: data.url,
-            caption: file.name.replace(/\.[^/.]+$/, ''),
-          });
-          uploaded = true;
-        }
-      } catch(e) {
-        console.warn('上传失败，使用本地临时展示:', e.message);
-      }
-
-      // 降级：无法连接后端时用本地 blob URL 临时预览
-      if (!uploaded) {
-        albumData.push({
-          type: file.type.startsWith('video/') ? 'video' : 'photo',
-          url: URL.createObjectURL(file),
-          caption: file.name.replace(/\.[^/.]+$/, ''),
-        });
-      }
-    }
-
-    uploadBtn.textContent = originalText;
-    uploadBtn.disabled = false;
-
-    // 自动跳到最后一页展示新上传内容
-    totalPages = Math.max(1, Math.ceil(albumData.length / ITEMS_PER_PAGE));
-    bookCurrentPage = totalPages - 1;
-    renderBookPages();
-    fileInput.value = '';
-  });
 }
 
 /* ============================================
@@ -3612,7 +3572,6 @@ function initParallax() {
 function init() {
   buildMemberCards();
   initAlbumEntry();
-  initAlbumUpload();
   loadAlbumFromServer();  // 从后端加载已上传的媒体文件
   initBookViewer();
   initMusicModule();
