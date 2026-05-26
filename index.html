@@ -1460,6 +1460,17 @@ body::after {
 }
 .book-viewer-rotate:hover { border-color: #fff; background: rgba(0,0,0,0.4); }
 
+.book-viewer-fullscreen {
+  position: absolute; top: 20px; right: 148px; z-index: 10;
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 2px dashed rgba(255,255,255,0.35);
+  background: rgba(0,0,0,0.25);
+  color: #fff; font-size: 18px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.3s ease;
+}
+.book-viewer-fullscreen:hover { border-color: #fff; background: rgba(0,0,0,0.4); }
+
 .book-viewer-counter {
   position: absolute; top: 20px; left: 28px; z-index: 10;
   color: rgba(255,255,255,0.6);
@@ -1604,6 +1615,22 @@ body::after {
   color: var(--text-light);
   opacity: 0.5;
   letter-spacing: 2px;
+}
+
+/* ---- 全局全屏按钮 ---- */
+.global-fullscreen-btn {
+  position: fixed; bottom: 32px; right: 90px; z-index: 9997;
+  width: 44px; height: 44px; border-radius: 50%;
+  border: 2px dashed rgba(255,255,255,0.4);
+  background: rgba(26,54,93,0.75);
+  color: #fff; font-size: 20px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(6px);
+}
+.global-fullscreen-btn:hover {
+  border-color: #fff; background: rgba(26,54,93,0.9);
+  transform: scale(1.08);
 }
 
 /* ============================================
@@ -2157,7 +2184,7 @@ body::after {
 }
 
 /* ============================================
-   底部彩蛋 —— 五指张开触发气球
+   底部彩蛋 —— 滚动到底部自动触发
    pointer-events: none 全程不遮挡交互
    ============================================ */
 
@@ -2443,6 +2470,7 @@ body::after {
       <span class="book-viewer-counter" id="bookViewerCounter"></span>
       <button class="book-btn book-viewer-close" id="bookViewerClose">✕ 关闭</button>
       <button class="book-viewer-rotate" id="bookViewerRotate" title="旋转照片">↻</button>
+      <button class="book-viewer-fullscreen" id="bookViewerFullscreen" title="全屏">⛶</button>
       <button class="book-viewer-nav prev" id="bookViewerPrev">‹</button>
       <button class="book-viewer-nav next" id="bookViewerNext">›</button>
       <div class="book-viewer-content" id="bookViewerContent">
@@ -2497,6 +2525,9 @@ body::after {
     <div class="footer-stitch stitch-line"></div>
     <div class="footer-copy">© 501 Dormitory · Yangzhou Polytechnic · Est. 2023</div>
   </footer>
+
+  <!-- 全屏按钮 -->
+  <button class="global-fullscreen-btn" id="globalFullscreenBtn" title="一键全屏">⛶</button>
 
 </div><!-- /page-wrapper -->
 
@@ -3103,9 +3134,27 @@ function rotateBookViewer() {
   img.style.transform = 'rotate(' + bookViewerRotation + 'deg)';
 }
 
+function toggleBookViewerFullscreen() {
+  const viewer = document.getElementById('bookViewer');
+  if (!document.fullscreenElement) {
+    viewer.requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen();
+  }
+}
+
+function toggleGlobalFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen();
+  }
+}
+
 function initBookViewer() {
   document.getElementById('bookViewerClose').addEventListener('click', (e) => { e.stopPropagation(); closeBookViewer(); });
   document.getElementById('bookViewerRotate').addEventListener('click', (e) => { e.stopPropagation(); rotateBookViewer(); });
+  document.getElementById('bookViewerFullscreen').addEventListener('click', (e) => { e.stopPropagation(); toggleBookViewerFullscreen(); });
   document.getElementById('bookViewerPrev').addEventListener('click', (e) => { e.stopPropagation(); bookViewerPrev(); });
   document.getElementById('bookViewerNext').addEventListener('click', (e) => { e.stopPropagation(); bookViewerNext(); });
 
@@ -3878,6 +3927,9 @@ function init() {
   initBookViewer();
   initMusicModule();
 
+  // 全局全屏按钮
+  document.getElementById('globalFullscreenBtn').addEventListener('click', toggleGlobalFullscreen);
+
   // 首次用户点击页面任意位置 → 解锁背景音乐自动播放
   let musicUnlocked = false;
   document.addEventListener('click', function unlockMusic() {
@@ -3915,7 +3967,7 @@ document.addEventListener('DOMContentLoaded', init);
 <!-- 隐藏音频播放器 -->
 <audio id="musicAudio" preload="metadata" loop style="display:none"></audio>
 
-<!-- 底部彩蛋：五指张开触发气球动画（TF.js + handpose） -->
+<!-- 底部彩蛋：滚动到底部自动触发气球动画 -->
 <script defer src="easter-egg.js"></script>
 
 </body>
