@@ -3,8 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- Content Security Policy —— 限制外部脚本/资源来源，防范 XSS 注入
-     TF.js 需要 blob: 创建 WebGL Worker，已在 script-src + worker-src 中开放 -->
+<!-- Content Security Policy —— 临时禁用排查彩蛋失效问题
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'self';
   script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://fonts.googleapis.com;
@@ -18,6 +17,7 @@
   object-src 'none';
   base-uri 'self';
 ">
+-->
 <!-- 毛笔书法字体：Ma Shan Zheng（飞白笔锋）+ Zhi Mang Xing（飘逸行书）作为 fallback -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
