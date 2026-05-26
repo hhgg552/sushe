@@ -2859,7 +2859,7 @@ async function loadAlbumFromServer() {
   // 降级：读取静态 album.json（GitHub Pages 兼容）
   if (!serverItems) {
     try {
-      const resp = await fetch('images/album.json');
+      const resp = await fetch('images/album.json?v=' + Date.now());
       if (resp.ok) {
         serverItems = await resp.json();
       }
@@ -2867,26 +2867,27 @@ async function loadAlbumFromServer() {
   }
 
   // 均不可用则使用硬编码数据
-  if (!serverItems) {
+  if (!serverItems || !serverItems.length) {
     console.log('📋 使用本地相册数据（未连接后端服务器）');
     return;
   }
 
-  const existingUrls = new Set(albumData.map(item => item.url));
-  let added = false;
+  // 用服务器数据完全替换 albumData（保留已有 caption 映射），避免删除照片后仍显示空页
+  const captionMap = {};
+  albumData.forEach(item => { captionMap[item.url] = item.caption; });
+
+  albumData.length = 0;
   serverItems.forEach(item => {
-    if (!existingUrls.has(item.url)) {
-      albumData.push({
-        type: item.type,
-        url: item.url,
-        caption: item.url.split('/').pop().replace(/\.[^/.]+$/, ''),
-      });
-      added = true;
-    }
+    albumData.push({
+      type: item.type,
+      url: item.url,
+      caption: captionMap[item.url] || item.url.split('/').pop().replace(/\.[^/.]+$/, ''),
+    });
   });
-  // 如果相册已打开且有新内容，刷新显示
-  if (added && document.getElementById('bookOverlay').classList.contains('active')) {
-    totalPages = Math.max(1, Math.ceil(albumData.length / ITEMS_PER_PAGE));
+
+  totalPages = Math.max(1, Math.ceil(albumData.length / ITEMS_PER_PAGE));
+  if (bookCurrentPage >= totalPages) bookCurrentPage = totalPages - 1;
+  if (document.getElementById('bookOverlay').classList.contains('active')) {
     renderBookPages();
   }
 }
