@@ -1,7 +1,8 @@
 /**
  * ============================================================
  *  501 宿舍纪念网页 - 底部彩蛋：五指张开发动气球动画
- *  技术栈：HTML5 + CSS3 + TensorFlow.js handpose
+ *  技术栈：HTML5 + CSS3 + MediaPipe Hands（替换 TF.js handpose）
+ *  模型仅 ~3MB（原 12MB），加载更快，识别更准
  *  无后端依赖，摄像头仅在滚动到底部后激活
  * ============================================================
  */
@@ -12,7 +13,7 @@
      全局状态机
      idle       → 正常浏览，摄像头/模型休眠
      prompting  → 已滚动到底部，显示"五指张开"提示
-     loading    → 正在加载 TF.js + handpose 模型
+     loading    → 正在加载 MediaPipe Hands 模型
      detecting  → 摄像头已启动，实时检测手势
      triggered  → 彩蛋已触发，气球动画播放中
      denied     → 摄像头权限被拒绝
@@ -20,14 +21,13 @@
   let state = 'idle';
   let videoEl = null;
   let mediaStream = null;
-  let handModel = null;
-  let detectRafId = null;
+  let handsInstance = null;   // MediaPipe Hands 实例
   let promptOverlay = null;
   let balloonContainer = null;
   let balloonInterval = null;
   let balloonStopTimer = null;
   let textOverlay = null;
-  let hasTriggered = false; // 防重复：一次页面生命周期只触发一次
+  let hasTriggered = false;   // 防重复：一次页面生命周期只触发一次
 
   /* ========================================================
      1. 滚动检测 —— 仅到底部时触发
@@ -35,7 +35,7 @@
   function isNearBottom() {
     const scrollBottom = window.innerHeight + window.scrollY;
     const pageHeight = document.documentElement.scrollHeight;
-    return scrollBottom >= pageHeight - 80; // 距底部 80px 内
+    return scrollBottom >= pageHeight - 80;
   }
 
   /* ========================================================
@@ -43,11 +43,9 @@
      ======================================================== */
   function createPromptUI() {
     if (promptOverlay) return;
-
     promptOverlay = document.createElement('div');
     promptOverlay.id = 'easterEggPrompt';
     promptOverlay.textContent = '五指张开 ✋';
-    // 样式通过下方 CSS 注入，此处仅设基础属性
     promptOverlay.setAttribute('data-state', 'prompting');
     document.body.appendChild(promptOverlay);
   }
@@ -85,7 +83,6 @@
       videoEl.srcObject = mediaStream;
       videoEl.width = 320;
       videoEl.height = 320;
-      // 视频元素隐藏在 body 中用于推理，对用户不可见
       videoEl.style.cssText =
         'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;';
       document.body.appendChild(videoEl);
@@ -99,11 +96,10 @@
   }
 
   /* ========================================================
-     4. 动态加载 TF.js + handpose —— 仅触发时才下载
+     4. MediaPipe Hands 加载 —— 轻量快速，模型仅 ~3MB
      ======================================================== */
   function loadScript(url) {
     return new Promise((resolve, reject) => {
-      // 避免重复加载
       if (document.querySelector(`script[src="${url}"]`)) return resolve();
       const s = document.createElement('script');
       s.src = url;
@@ -113,94 +109,88 @@
     });
   }
 
-  async function loadHandposeModel() {
-    // 按顺序加载体量较大的 TF.js CDN 资源
-    await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js');
-    // 等待 tf 全局变量可用
-    let retries = 0;
-    while (!window.tf && retries < 30) {
-      await new Promise((r) => setTimeout(r, 200));
-      retries++;
-    }
-    if (!window.tf) throw new Error('TensorFlow.js 加载超时');
-
-    await window.tf.ready();
-    // 使用 WebGL 后端加速推理
-    try {
-      await window.tf.setBackend('webgl');
-    } catch (e) {
-      console.warn('[彩蛋] WebGL 不可用，降级为 CPU:', e.message);
-    }
-
+  async function loadMediaPipeHands() {
+    // 加载 MediaPipe Hands 核心库（约 200KB）
     await loadScript(
-      'https://cdn.jsdelivr.net/npm/@tensorflow-models/handpose@0.0.7/dist/handpose.min.js'
+      'https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands.js'
     );
-    retries = 0;
-    while (!window.handpose && retries < 30) {
+    let retries = 0;
+    while (!window.Hands && retries < 30) {
       await new Promise((r) => setTimeout(r, 200));
       retries++;
     }
-    if (!window.handpose) throw new Error('handpose 模型加载超时');
+    if (!window.Hands) throw new Error('MediaPipe Hands 加载超时');
 
-    // 加载预训练权重（首次从 TF Hub 下载 ≈ 12MB）
-    handModel = await window.handpose.load({
-      maxContinuousChecks: 5,
-      detectionConfidence: 0.8,
-      iouThreshold: 0.3,
-      scoreThreshold: 0.75,
+    // 创建 Hands 实例，模型文件通过 locateFile 指向 CDN
+    handsInstance = new window.Hands({
+      locateFile: (file) =>
+        `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/${file}`,
     });
-    return handModel;
+
+    // 配置：单手检测 + Lite 模型（更快更轻）
+    handsInstance.setOptions({
+      maxNumHands: 1,
+      modelComplexity: 0,          // 0 = Lite (~3MB), 1 = Full (~6MB)
+      minDetectionConfidence: 0.7,
+      minTrackingConfidence: 0.5,
+    });
+
+    // 注册回调：每帧检测结果自动触发
+    handsInstance.onResults(onHandResults);
+
+    // 预热模型（首次推理初始化 WASM + 下载模型文件）
+    await handsInstance.initialize();
+    // 等一小段让 WASM 和模型文件就绪
+    await new Promise((r) => setTimeout(r, 500));
+    await handsInstance.send({ image: videoEl });
+
+    return handsInstance;
   }
 
   /* ========================================================
      5. 手势识别 —— 判断五指完全伸展且手掌朝向镜头
-     ========================================================
-     handpose 返回 21 个关键点（0=手腕, 1-4=拇指, 5-8=食指,
-     9-12=中指, 13-16=无名指, 17-20=小指）每点 = [x, y, z]
+     MediaPipe 返回 21 个关键点（0=手腕, 1-4=拇指, 5-8=食指,
+     9-12=中指, 13-16=无名指, 17-20=小指）
+     每点 = {x, y, z} 归一化坐标（0~1），z 越小越靠近镜头
      ======================================================== */
 
-  /** 计算两点欧几里得距离 */
+  /** 计算两点欧几里得距离（归一化坐标系） */
   function dist2d(a, b) {
-    return Math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2);
+    return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
   }
 
-  /** 判断单根手指是否伸展：
-   *  指尖比 PIP 关节更远离手腕即为伸展 */
+  /** 判断单根手指是否伸展：指尖比 PIP 关节更远离手腕 */
   function isFingerExtended(tip, pip, wrist) {
     const tipDist = dist2d(tip, wrist);
     const pipDist = dist2d(pip, wrist);
-    return tipDist > pipDist * 1.05; // 5% 阈值防止抖动
+    return tipDist > pipDist * 1.05;
   }
 
   /** 判断手指是否张开（水平间距足够大） */
   function isSpread(keypoints) {
-    // 食指(8) ↔ 小指(20) 的水平距离应 > 无名指到中指距离的 2 倍
     const indexTip = keypoints[8];
     const pinkyTip = keypoints[20];
     const middleTip = keypoints[12];
     const ringTip = keypoints[16];
 
-    const totalSpread = Math.abs(indexTip[0] - pinkyTip[0]);
-    const innerSpread = Math.abs(middleTip[0] - ringTip[0]);
+    const totalSpread = Math.abs(indexTip.x - pinkyTip.x);
+    const innerSpread = Math.abs(middleTip.x - ringTip.x);
     return totalSpread > innerSpread * 1.8;
   }
 
   /** 综合判断：五指张开、手掌朝向镜头 */
-  function isFiveFingersOpen(predictions) {
-    if (!predictions || predictions.length === 0) return false;
+  function isFiveFingersOpen(landmarks) {
+    if (!landmarks || landmarks.length < 21) return false;
 
-    const keypoints = predictions[0].landmarks;
-    if (!keypoints || keypoints.length < 21) return false;
-
-    const wrist = keypoints[0];
+    const wrist = landmarks[0];
 
     // 各手指: [tip, pip]
     const fingers = [
-      [keypoints[4], keypoints[2]],   // 拇指
-      [keypoints[8], keypoints[6]],   // 食指
-      [keypoints[12], keypoints[10]], // 中指
-      [keypoints[16], keypoints[14]], // 无名指
-      [keypoints[20], keypoints[18]], // 小指
+      [landmarks[4], landmarks[2]],   // 拇指
+      [landmarks[8], landmarks[6]],   // 食指
+      [landmarks[12], landmarks[10]], // 中指
+      [landmarks[16], landmarks[14]], // 无名指
+      [landmarks[20], landmarks[18]], // 小指
     ];
 
     // 1. 所有手指都伸展
@@ -210,46 +200,45 @@
     if (!allExtended) return false;
 
     // 2. 手指水平展开
-    if (!isSpread(keypoints)) return false;
+    if (!isSpread(landmarks)) return false;
 
-    // 3. 手掌朝向镜头：中指尖 z < 手腕 z（指尖比手腕更靠近镜头）
-    const middleTip = keypoints[12];
-    if (middleTip[2] > wrist[2]) return false;
+    // 3. 手掌朝向镜头：中指尖 z < 手腕 z
+    const middleTip = landmarks[12];
+    if (middleTip.z > wrist.z) return false;
 
     return true;
   }
 
   /* ========================================================
-     6. 检测循环 —— requestAnimationFrame 驱动
+     6. MediaPipe 检测回调 —— 每帧自动触发，无需轮询
      ======================================================== */
-  async function detectionLoop() {
-    if (state !== 'detecting') return;
+  function onHandResults(results) {
+    if (state !== 'detecting' || hasTriggered) return;
 
-    try {
-      const predictions = await handModel.estimateHands(videoEl);
-      if (isFiveFingersOpen(predictions)) {
+    if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+      if (isFiveFingersOpen(results.multiHandLandmarks[0])) {
         onGestureDetected();
-        return;
       }
-    } catch (e) {
-      // 模型推理偶发错误，静默吞掉继续下一帧
     }
+  }
 
-    detectRafId = requestAnimationFrame(detectionLoop);
+  /** 持续将视频帧送入 MediaPipe */
+  function sendFrame() {
+    if (state !== 'detecting' || hasTriggered) return;
+    if (handsInstance && videoEl && videoEl.readyState >= 2) {
+      handsInstance.send({ image: videoEl }).catch(() => {});
+    }
+    requestAnimationFrame(sendFrame);
   }
 
   function onGestureDetected() {
-    // 防重复触发：已触发过则直接忽略后续识别结果
     if (hasTriggered) return;
     hasTriggered = true;
 
-    // 立刻释放摄像头与模型资源
     releaseResources();
     hidePrompt();
     state = 'triggered';
 
-    // 延迟一帧启动动画，避免资源释放的 DOM 操作（移除 video 元素）
-    // 与文字/气球创建在同一帧内造成布局抖动
     requestAnimationFrame(() => {
       showGraduationText();
       startBalloons();
@@ -257,28 +246,23 @@
   }
 
   /* ========================================================
-     7. 资源释放 —— 关摄像头、停模型、释放内存
+     7. 资源释放 —— 关摄像头、释放 MediaPipe、停帧推送
      ======================================================== */
   function releaseResources() {
-    // 停止摄像头
     if (mediaStream) {
       mediaStream.getTracks().forEach((track) => track.stop());
       mediaStream = null;
     }
-    // 移除隐藏 video
     if (videoEl && videoEl.parentNode) {
       videoEl.parentNode.removeChild(videoEl);
       videoEl = null;
     }
-    // 停检测循环
-    if (detectRafId) {
-      cancelAnimationFrame(detectRafId);
-      detectRafId = null;
-    }
-    // 释放 TF 模型内存
-    if (handModel) {
-      try { handModel.dispose(); } catch (e) { /* ignore */ }
-      handModel = null;
+    // MediaPipe Hands 清理
+    if (handsInstance) {
+      try {
+        handsInstance.close();
+      } catch (e) { /* ignore */ }
+      handsInstance = null;
     }
   }
 
@@ -286,16 +270,9 @@
      8. 气球动画
      ======================================================== */
 
-  /** 气球柔和配色 */
   const BALLOON_COLORS = [
-    '#F9A8D4', // 粉
-    '#C4B5FD', // 紫
-    '#FDE68A', // 黄
-    '#93C5FD', // 浅蓝
-    '#FDA4AF', // 柔和红
-    '#A5B4FC', // 薰衣草
-    '#FCD34D', // 金
-    '#67E8F9', // 天蓝
+    '#F9A8D4', '#C4B5FD', '#FDE68A', '#93C5FD',
+    '#FDA4AF', '#A5B4FC', '#FCD34D', '#67E8F9',
   ];
 
   function randomBetween(min, max) {
@@ -306,19 +283,15 @@
     return arr[Math.floor(Math.random() * arr.length)];
   }
 
-  /** 创建单个气球 DOM —— 含气球主体 + 绳结 + 自然弯曲的绳子 */
   function createBalloon() {
     const size = randomBetween(40, 80);
     const left = randomBetween(2, 94);
     const duration = randomBetween(8, 12);
     const opacity = randomBetween(0.78, 0.92);
     const color = pickRandom(BALLOON_COLORS);
-    // 绳子垂直长度 60~140px，随气球大小变化
     const stringLen = randomBetween(size * 1.2, size * 2.0);
-    // 绳子弯曲幅度 8~20px，让每根绳子弯得不一样
     const curveX = randomBetween(8, 20) * (Math.random() > 0.5 ? 1 : -1);
 
-    // 外层容器：承载上升 + 摇摆动画
     const wrapper = document.createElement('div');
     wrapper.className = 'easter-ballon-wrapper';
     wrapper.style.cssText = `
@@ -334,7 +307,6 @@
                  balloonWobble ${randomBetween(3, 5)}s ease-in-out infinite;
     `;
 
-    // 气球主体
     const balloon = document.createElement('div');
     balloon.className = 'easter-ballon';
     balloon.style.cssText = `
@@ -354,37 +326,29 @@
       flex-shrink: 0;
     `;
 
-    // 绳结（气球底部小三角）
     const knot = document.createElement('div');
     knot.style.cssText = `
-      width: 0;
-      height: 0;
+      width: 0; height: 0;
       border-left: 5px solid transparent;
       border-right: 5px solid transparent;
       border-top: 7px solid ${color};
       margin-top: -1px;
     `;
 
-    // SVG 曲线绳子 —— 用二次贝塞尔画出自然下垂的弧线
     const svgNS = 'http://www.w3.org/2000/svg';
     const svg = document.createElementNS(svgNS, 'svg');
     const svgW = Math.abs(curveX) * 2 + 4;
     svg.setAttribute('width', svgW);
     svg.setAttribute('height', stringLen);
     svg.setAttribute('viewBox', `0 0 ${svgW} ${stringLen}`);
-    svg.style.cssText = `
-      flex-shrink: 0;
-      margin-top: -1px;
-    `;
+    svg.style.cssText = 'flex-shrink: 0; margin-top: -1px;';
 
     const path = document.createElementNS(svgNS, 'path');
-    const startX = svgW / 2;           // 起点：顶部居中（绳结下方）
-    const endX = startX + curveX;       // 终点：弯曲偏移
-    const cpX = startX + curveX * 0.6; // 控制点：60% 弯曲
+    const startX = svgW / 2;
+    const endX = startX + curveX;
+    const cpX = startX + curveX * 0.6;
     const cpY = stringLen * 0.45;
-    path.setAttribute('d',
-      `M ${startX} 0 Q ${cpX} ${cpY} ${endX} ${stringLen}`
-    );
+    path.setAttribute('d', `M ${startX} 0 Q ${cpX} ${cpY} ${endX} ${stringLen}`);
     path.setAttribute('stroke', 'rgba(180,160,140,0.45)');
     path.setAttribute('stroke-width', '1.2');
     path.setAttribute('fill', 'none');
@@ -393,7 +357,7 @@
       animation: stringSway ${randomBetween(2, 3.5)}s ease-in-out infinite;
     `;
     svg.appendChild(path);
-    // 末尾加一个小点模拟绳尾
+
     const dot = document.createElementNS(svgNS, 'circle');
     dot.setAttribute('cx', endX);
     dot.setAttribute('cy', stringLen);
@@ -405,7 +369,6 @@
     wrapper.appendChild(knot);
     wrapper.appendChild(svg);
 
-    // 飞出视口后自动销毁整个 wrapper
     wrapper.addEventListener('animationend', (e) => {
       if (e.animationName === 'balloonRise') {
         if (wrapper.parentNode) wrapper.parentNode.removeChild(wrapper);
@@ -415,7 +378,6 @@
     return wrapper;
   }
 
-  /** 创建容器并开始生成气球 */
   function startBalloons() {
     if (!balloonContainer) {
       balloonContainer = document.createElement('div');
@@ -425,11 +387,9 @@
       document.body.appendChild(balloonContainer);
     }
 
-    // 每 2 秒生成 3~5 个
     balloonInterval = setInterval(() => {
-      const count = Math.floor(randomBetween(3, 6)); // 3~5 个
+      const count = Math.floor(randomBetween(3, 6));
       for (let i = 0; i < count; i++) {
-        // 错开 100ms 让气球不堆叠
         setTimeout(() => {
           const b = createBalloon();
           balloonContainer.appendChild(b);
@@ -437,7 +397,6 @@
       }
     }, 2000);
 
-    // 10 秒后停止生成
     balloonStopTimer = setTimeout(() => {
       clearInterval(balloonInterval);
       balloonInterval = null;
@@ -445,24 +404,16 @@
   }
 
   /* ========================================================
-     8.5 毕业祝福文字动画 —— 与气球同步，渐显 → 上浮 → 渐隐
-     毛笔书法字体 + 随机毕业配色，飘逸醒目不遮挡交互
+     8.5 毕业祝福文字动画
      ======================================================== */
 
-  /** 毕业主题配色 —— 每次随机选一种，动画全程不变 */
   const GRAD_COLORS = [
-    '#FF6B8B', // 浅粉
-    '#4A90E2', // 浅蓝
-    '#F9D466', // 鹅黄
-    '#6BCB77', // 薄荷绿
-    '#9D65C9', // 浅紫
-    '#FF9F43', // 浅橙
+    '#FF6B8B', '#4A90E2', '#F9D466', '#6BCB77', '#9D65C9', '#FF9F43',
   ];
 
   function showGraduationText() {
     if (textOverlay) return;
 
-    // 从配色列表中随机选一个，动画全程使用同一颜色
     const textColor = GRAD_COLORS[Math.floor(Math.random() * GRAD_COLORS.length)];
 
     textOverlay = document.createElement('div');
@@ -474,14 +425,12 @@
       left: 50%;
       transform: translate(-50%, -50%);
       z-index: 9999;
-      /* 毛笔书法字体：Ma Shan Zheng 飞白笔锋，Zhi Mang Xing 飘逸行书，回退到衬线 */
       font-family: 'Ma Shan Zheng', 'Zhi Mang Xing', 'STKaiti', 'KaiTi', 'Noto Serif SC', serif;
       font-size: 56px;
       font-weight: normal;
       color: ${textColor};
       letter-spacing: 10px;
       white-space: nowrap;
-      /* 柔光描边 + 彩色光晕，增强中式浪漫氛围 */
       text-shadow:
         0 2px 4px rgba(0, 0, 0, 0.25),
         0 0 60px ${textColor}44,
@@ -493,7 +442,6 @@
     `;
     document.body.appendChild(textOverlay);
 
-    // 动画结束后清理 DOM（总时长 ≈ 1.2 + 5 + 1.5 ≈ 7.7s）
     setTimeout(() => {
       if (textOverlay && textOverlay.parentNode) {
         textOverlay.parentNode.removeChild(textOverlay);
@@ -511,13 +459,11 @@
     if (hasTriggered || state === 'triggered' || state === 'denied') return;
     if (!isNearBottom()) return;
 
-    // 进入提示状态
     if (state === 'idle') {
       state = 'prompting';
       showPrompt('五指张开 ✋');
     }
 
-    // 提示状态下请求摄像头
     if (state === 'prompting') {
       state = 'loading';
       showPrompt('正在准备摄像头...');
@@ -526,7 +472,6 @@
       if (!camOk) {
         state = 'denied';
         showPrompt('请开启摄像头以触发彩蛋');
-        // 5 秒后自动隐藏提示
         setTimeout(() => {
           hidePrompt();
           if (promptOverlay) {
@@ -540,7 +485,7 @@
       showPrompt('加载模型中...');
 
       try {
-        await loadHandposeModel();
+        await loadMediaPipeHands();
       } catch (err) {
         console.warn('[彩蛋] 模型加载失败:', err.message);
         state = 'idle';
@@ -551,7 +496,7 @@
 
       state = 'detecting';
       showPrompt('五指张开 ✋');
-      detectionLoop();
+      sendFrame();  // 开始推送视频帧给 MediaPipe
     }
   }
 
@@ -576,5 +521,5 @@
     if (balloonStopTimer) clearTimeout(balloonStopTimer);
   });
 
-  console.log('[彩蛋] 已就绪 — 滚动到页面底部触发五指张开识别');
+  console.log('[彩蛋] 已就绪 — 滚动到页面底部触发五指张开识别（MediaPipe Hands）');
 })();
