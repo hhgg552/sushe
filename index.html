@@ -412,6 +412,7 @@ body::after {
   animation: fade-in-up 1.2s 0.2s both;
 }
 
+/* 主标题 —— 毛笔书法字体，仅改动 font-family，其余属性全保留 */
 .header-title {
   font-size: 52px;
   font-weight: bold;
@@ -425,6 +426,20 @@ body::after {
     -1px -1px 0 rgba(255, 255, 255, 0.3);
   display: inline-block;
   animation: stitch-title 1.8s 0.4s both;
+  /* 毛笔书法字体栈：
+     Ma Shan Zheng — 笔锋飞白，颗粒纹理，首选
+     Zhi Mang Xing — 飘逸行书，灵动随性
+     STXingkai / KaiTi — Windows 系统书法回退
+     serif — 最终回退 */
+  font-family:
+    'Ma Shan Zheng',
+    'Zhi Mang Xing',
+    'STXingkai',
+    'KaiTi',
+    'Noto Serif SC',
+    'STSong',
+    'SimSun',
+    serif;
 }
 
 .header-title .dot {
