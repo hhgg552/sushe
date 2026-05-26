@@ -294,23 +294,36 @@
     return arr[Math.floor(Math.random() * arr.length)];
   }
 
-  /** 创建单个气球 DOM */
+  /** 创建单个气球 DOM —— 含气球主体 + 绳子 + 绳结 */
   function createBalloon() {
-    const balloon = document.createElement('div');
-    balloon.className = 'easter-ballon';
-
     const size = randomBetween(40, 80);
-    const left = randomBetween(2, 94); // 距左 2%~94%
+    const left = randomBetween(2, 94);
     const duration = randomBetween(8, 12);
-    const wobble = randomBetween(-15, 15);
     const opacity = randomBetween(0.78, 0.92);
     const color = pickRandom(BALLOON_COLORS);
+    // 绳子长度 60~140px，随气球大小变化
+    const stringLen = randomBetween(size * 1.2, size * 2.0);
 
-    // 气球主体
-    balloon.style.cssText = `
+    // 外层容器：承载上升 + 摇摆动画，绳子随气球一起运动
+    const wrapper = document.createElement('div');
+    wrapper.className = 'easter-ballon-wrapper';
+    wrapper.style.cssText = `
       position: fixed;
       left: ${left}vw;
-      bottom: -${size}px;
+      bottom: -${size + stringLen}px;
+      pointer-events: none;
+      z-index: 9998;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      animation: balloonRise ${duration}s ease-in forwards,
+                 balloonWobble ${randomBetween(2.5, 4.5)}s ease-in-out infinite;
+    `;
+
+    // 气球主体
+    const balloon = document.createElement('div');
+    balloon.className = 'easter-ballon';
+    balloon.style.cssText = `
       width: ${size}px;
       height: ${size * 1.3}px;
       background: radial-gradient(
@@ -321,39 +334,49 @@
       );
       border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
       opacity: ${opacity};
-      pointer-events: none;
-      z-index: 9998;
       box-shadow:
         inset -4px -6px 12px rgba(0,0,0,0.06),
         0 4px 16px rgba(0,0,0,0.05);
-      animation: balloonRise ${duration}s ease-in forwards,
-                 balloonWobble ${randomBetween(2.5, 4.5)}s ease-in-out infinite;
+      flex-shrink: 0;
     `;
 
-    // 气球下方小三角（绳结）
+    // 绳结（气球底部小三角）
     const knot = document.createElement('div');
     knot.style.cssText = `
-      position: absolute;
-      bottom: -4px;
-      left: 50%;
-      transform: translateX(-50%);
       width: 0;
       height: 0;
-      border-left: 4px solid transparent;
-      border-right: 4px solid transparent;
-      border-top: 6px solid ${color};
-      pointer-events: none;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 7px solid ${color};
+      margin-top: -1px;
     `;
-    balloon.appendChild(knot);
 
-    // 飞出视口后自动销毁
-    balloon.addEventListener('animationend', (e) => {
+    // 绳子（细线，从绳结向下延伸）
+    const string = document.createElement('div');
+    string.className = 'easter-ballon-string';
+    string.style.cssText = `
+      width: 1.5px;
+      height: ${stringLen}px;
+      background: linear-gradient(180deg,
+        rgba(180,160,140,0.7) 0%,
+        rgba(180,160,140,0.35) 60%,
+        rgba(180,160,140,0.08) 100%
+      );
+      flex-shrink: 0;
+    `;
+
+    wrapper.appendChild(balloon);
+    wrapper.appendChild(knot);
+    wrapper.appendChild(string);
+
+    // 飞出视口后自动销毁整个 wrapper
+    wrapper.addEventListener('animationend', (e) => {
       if (e.animationName === 'balloonRise') {
-        if (balloon.parentNode) balloon.parentNode.removeChild(balloon);
+        if (wrapper.parentNode) wrapper.parentNode.removeChild(wrapper);
       }
     });
 
-    return balloon;
+    return wrapper;
   }
 
   /** 创建容器并开始生成气球 */
