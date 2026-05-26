@@ -2164,6 +2164,13 @@ body::after {
   75%      { margin-left: -15px; }
 }
 
+/* 绳子独立微摆动 —— 比气球摇摆稍快、幅度更小，模拟空气阻力 */
+@keyframes stringSway {
+  0%, 100% { transform: rotate(0deg); }
+  25%      { transform: rotate(2deg); }
+  75%      { transform: rotate(-2deg); }
+}
+
 /* 气球容器 —— 无交互穿透 */
 #easterBalloonContainer {
   position: fixed;

@@ -294,30 +294,32 @@
     return arr[Math.floor(Math.random() * arr.length)];
   }
 
-  /** 创建单个气球 DOM —— 含气球主体 + 绳子 + 绳结 */
+  /** 创建单个气球 DOM —— 含气球主体 + 绳结 + 自然弯曲的绳子 */
   function createBalloon() {
     const size = randomBetween(40, 80);
     const left = randomBetween(2, 94);
     const duration = randomBetween(8, 12);
     const opacity = randomBetween(0.78, 0.92);
     const color = pickRandom(BALLOON_COLORS);
-    // 绳子长度 60~140px，随气球大小变化
+    // 绳子垂直长度 60~140px，随气球大小变化
     const stringLen = randomBetween(size * 1.2, size * 2.0);
+    // 绳子弯曲幅度 8~20px，让每根绳子弯得不一样
+    const curveX = randomBetween(8, 20) * (Math.random() > 0.5 ? 1 : -1);
 
-    // 外层容器：承载上升 + 摇摆动画，绳子随气球一起运动
+    // 外层容器：承载上升 + 摇摆动画
     const wrapper = document.createElement('div');
     wrapper.className = 'easter-ballon-wrapper';
     wrapper.style.cssText = `
       position: fixed;
       left: ${left}vw;
-      bottom: -${size + stringLen}px;
+      bottom: -${size + stringLen + 20}px;
       pointer-events: none;
       z-index: 9998;
       display: flex;
       flex-direction: column;
       align-items: center;
       animation: balloonRise ${duration}s ease-in forwards,
-                 balloonWobble ${randomBetween(2.5, 4.5)}s ease-in-out infinite;
+                 balloonWobble ${randomBetween(3, 5)}s ease-in-out infinite;
     `;
 
     // 气球主体
@@ -351,23 +353,45 @@
       margin-top: -1px;
     `;
 
-    // 绳子（细线，从绳结向下延伸）
-    const string = document.createElement('div');
-    string.className = 'easter-ballon-string';
-    string.style.cssText = `
-      width: 1.5px;
-      height: ${stringLen}px;
-      background: linear-gradient(180deg,
-        rgba(180,160,140,0.7) 0%,
-        rgba(180,160,140,0.35) 60%,
-        rgba(180,160,140,0.08) 100%
-      );
+    // SVG 曲线绳子 —— 用二次贝塞尔画出自然下垂的弧线
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNS, 'svg');
+    const svgW = Math.abs(curveX) * 2 + 4;
+    svg.setAttribute('width', svgW);
+    svg.setAttribute('height', stringLen);
+    svg.setAttribute('viewBox', `0 0 ${svgW} ${stringLen}`);
+    svg.style.cssText = `
       flex-shrink: 0;
+      margin-top: -1px;
     `;
+
+    const path = document.createElementNS(svgNS, 'path');
+    const startX = svgW / 2;           // 起点：顶部居中（绳结下方）
+    const endX = startX + curveX;       // 终点：弯曲偏移
+    const cpX = startX + curveX * 0.6; // 控制点：60% 弯曲
+    const cpY = stringLen * 0.45;
+    path.setAttribute('d',
+      `M ${startX} 0 Q ${cpX} ${cpY} ${endX} ${stringLen}`
+    );
+    path.setAttribute('stroke', 'rgba(180,160,140,0.45)');
+    path.setAttribute('stroke-width', '1.2');
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke-linecap', 'round');
+    path.style.cssText = `
+      animation: stringSway ${randomBetween(2, 3.5)}s ease-in-out infinite;
+    `;
+    svg.appendChild(path);
+    // 末尾加一个小点模拟绳尾
+    const dot = document.createElementNS(svgNS, 'circle');
+    dot.setAttribute('cx', endX);
+    dot.setAttribute('cy', stringLen);
+    dot.setAttribute('r', '1.2');
+    dot.setAttribute('fill', 'rgba(180,160,140,0.35)');
+    svg.appendChild(dot);
 
     wrapper.appendChild(balloon);
     wrapper.appendChild(knot);
-    wrapper.appendChild(string);
+    wrapper.appendChild(svg);
 
     // 飞出视口后自动销毁整个 wrapper
     wrapper.addEventListener('animationend', (e) => {
