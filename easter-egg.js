@@ -270,21 +270,22 @@
   function setupWebGLFallback() {
     const canvas = document.createElement('canvas');
     const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-    if (gl) {
-      canvas.addEventListener('webglcontextlost', (e) => {
-        console.warn('[彩蛋] WebGL 上下文丢失，尝试恢复...');
-        e.preventDefault(); // 允许浏览器尝试恢复
-        // 暂停一帧让 GPU 恢复
-        lastFrameTime = performance.now() + 500;
-      });
-      canvas.addEventListener('webglcontextrestored', () => {
-        console.log('[彩蛋] WebGL 上下文已恢复');
-        lastFrameTime = 0;
-      });
-      // 用完即弃，仅用于注册事件监听
-      const loseContext = gl.getExtension('WEBGL_lose_context');
-      if (loseContext) { loseContext.loseContext(); }
+    if (!gl) {
+      console.warn('[彩蛋] 当前浏览器不支持 WebGL，手势识别可能不可用');
+      return;
     }
+    canvas.addEventListener('webglcontextlost', (e) => {
+      console.warn('[彩蛋] WebGL 上下文丢失，尝试恢复...');
+      e.preventDefault();
+      lastFrameTime = performance.now() + 500;
+    });
+    canvas.addEventListener('webglcontextrestored', () => {
+      console.log('[彩蛋] WebGL 上下文已恢复');
+      lastFrameTime = 0;
+    });
+    // 暂存引用防止 GC，不主动触发 context lost
+    setupWebGLFallback._canvas = canvas;
+    setupWebGLFallback._gl = gl;
   }
   setupWebGLFallback();
 
@@ -540,6 +541,19 @@
       }
 
       showPrompt('加载模型中...');
+
+      // 【WebGL 预检】创建临时 canvas 检测 WebGL 是否可用
+      const testCanvas = document.createElement('canvas');
+      const testGL = testCanvas.getContext('webgl') || testCanvas.getContext('experimental-webgl');
+      if (!testGL) {
+        console.warn('[彩蛋] WebGL 不可用，手势识别无法启动');
+        state = 'idle';
+        hidePrompt();
+        releaseResources();
+        return;
+      }
+      // 临时 context 用完即弃，避免占用 WebGL 槽位
+      testCanvas.width = 1; testCanvas.height = 1;
 
       try {
         await loadMediaPipeHands();
