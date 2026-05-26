@@ -140,9 +140,17 @@
 
     // 预热模型（首次推理初始化 WASM + 下载模型文件）
     await handsInstance.initialize();
-    // 等一小段让 WASM 和模型文件就绪
-    await new Promise((r) => setTimeout(r, 500));
-    await handsInstance.send({ image: videoEl });
+    // 等待模型文件和 WASM 完全就绪
+    await new Promise((r) => setTimeout(r, 800));
+
+    // 【修复】确保视频已就绪再送首帧
+    if (videoEl && videoEl.readyState >= 2) {
+      try {
+        await handsInstance.send({ image: videoEl });
+      } catch (e) {
+        console.warn('[彩蛋] 模型预热失败，将在帧循环中重试:', e.message);
+      }
+    }
 
     return handsInstance;
   }
@@ -210,8 +218,13 @@
   }
 
   /* ========================================================
-     6. MediaPipe 检测回调 —— 每帧自动触发，无需轮询
+     6. MediaPipe 检测回调 + 帧推送（10fps 节流）
      ======================================================== */
+
+  /** 节流计时 —— 限制 10fps 降低 GPU 压力，避免 WebGL 上下文丢失 */
+  let lastFrameTime = 0;
+  const FRAME_INTERVAL = 100; // 10fps = 100ms
+
   function onHandResults(results) {
     if (state !== 'detecting' || hasTriggered) return;
 
@@ -222,14 +235,58 @@
     }
   }
 
-  /** 持续将视频帧送入 MediaPipe */
+  /** 持续将视频帧送入 MediaPipe（10fps 节流 + 视频就绪检查 + WebGL 容错） */
   function sendFrame() {
     if (state !== 'detecting' || hasTriggered) return;
-    if (handsInstance && videoEl && videoEl.readyState >= 2) {
-      handsInstance.send({ image: videoEl }).catch(() => {});
+
+    const now = performance.now();
+    if (now - lastFrameTime < FRAME_INTERVAL) {
+      requestAnimationFrame(sendFrame);
+      return;
     }
+    lastFrameTime = now;
+
+    // 【修复1】视频就绪状态检查：readyState >= 2 且视频宽高 > 0
+    if (
+      handsInstance &&
+      videoEl &&
+      videoEl.readyState >= 2 &&
+      videoEl.videoWidth > 0 &&
+      videoEl.videoHeight > 0
+    ) {
+      // 【修复2】send() 错误静默吞掉，避免 WebGL 偶发报错弹窗
+      handsInstance.send({ image: videoEl }).catch((e) => {
+        // WebGL 上下文偶发丢失，静默跳过下一帧自动恢复
+        if (e.message && e.message.includes('WebGL')) {
+          console.warn('[彩蛋] WebGL 上下文异常，跳过当前帧');
+        }
+      });
+    }
+
     requestAnimationFrame(sendFrame);
   }
+
+  // 【修复3】监听 WebGL 上下文丢失，页面级别兜底
+  function setupWebGLFallback() {
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    if (gl) {
+      canvas.addEventListener('webglcontextlost', (e) => {
+        console.warn('[彩蛋] WebGL 上下文丢失，尝试恢复...');
+        e.preventDefault(); // 允许浏览器尝试恢复
+        // 暂停一帧让 GPU 恢复
+        lastFrameTime = performance.now() + 500;
+      });
+      canvas.addEventListener('webglcontextrestored', () => {
+        console.log('[彩蛋] WebGL 上下文已恢复');
+        lastFrameTime = 0;
+      });
+      // 用完即弃，仅用于注册事件监听
+      const loseContext = gl.getExtension('WEBGL_lose_context');
+      if (loseContext) { loseContext.loseContext(); }
+    }
+  }
+  setupWebGLFallback();
 
   function onGestureDetected() {
     if (hasTriggered) return;
