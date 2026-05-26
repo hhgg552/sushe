@@ -443,27 +443,46 @@
 
   /* ========================================================
      8.5 毕业祝福文字动画 —— 与气球同步，渐显 → 上浮 → 渐隐
+     毛笔书法字体 + 随机毕业配色，飘逸醒目不遮挡交互
      ======================================================== */
+
+  /** 毕业主题配色 —— 每次随机选一种，动画全程不变 */
+  const GRAD_COLORS = [
+    '#FF6B8B', // 浅粉
+    '#4A90E2', // 浅蓝
+    '#F9D466', // 鹅黄
+    '#6BCB77', // 薄荷绿
+    '#9D65C9', // 浅紫
+    '#FF9F43', // 浅橙
+  ];
+
   function showGraduationText() {
     if (textOverlay) return;
+
+    // 从配色列表中随机选一个，动画全程使用同一颜色
+    const textColor = GRAD_COLORS[Math.floor(Math.random() * GRAD_COLORS.length)];
+
     textOverlay = document.createElement('div');
     textOverlay.id = 'easterGraduationText';
     textOverlay.textContent = '毕业快乐，前程似锦！';
     textOverlay.style.cssText = `
       position: fixed;
-      top: 50%;
+      top: 40%;
       left: 50%;
       transform: translate(-50%, -50%);
       z-index: 9999;
-      font-size: 36px;
-      font-family: 'Noto Serif SC', 'STSong', 'SimSun', serif;
-      font-weight: bold;
-      color: #fff;
-      letter-spacing: 8px;
+      /* 毛笔书法字体：Ma Shan Zheng 飞白笔锋，Zhi Mang Xing 飘逸行书，回退到衬线 */
+      font-family: 'Ma Shan Zheng', 'Zhi Mang Xing', 'STKaiti', 'KaiTi', 'Noto Serif SC', serif;
+      font-size: 56px;
+      font-weight: normal;
+      color: ${textColor};
+      letter-spacing: 10px;
       white-space: nowrap;
+      /* 柔光描边 + 彩色光晕，增强中式浪漫氛围 */
       text-shadow:
-        0 2px 8px rgba(26, 54, 93, 0.5),
-        0 0 40px rgba(184, 151, 90, 0.3);
+        0 2px 4px rgba(0, 0, 0, 0.25),
+        0 0 60px ${textColor}44,
+        0 0 120px ${textColor}22;
       pointer-events: none;
       animation: gradTextFadeIn 1.2s ease-out forwards,
                  gradTextFloat 5s 1.2s ease-in-out forwards,
