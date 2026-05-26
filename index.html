@@ -2110,6 +2110,71 @@ body::after {
   flex-shrink: 0;
   letter-spacing: 1px;
 }
+
+/* ============================================
+   底部彩蛋 —— 五指张开触发气球
+   pointer-events: none 全程不遮挡交互
+   ============================================ */
+
+/* 提示浮层 */
+#easterEggPrompt {
+  position: fixed;
+  bottom: 50%;
+  left: 50%;
+  transform: translate(-50%, 50%);
+  z-index: 9999;
+  padding: 16px 36px;
+  border-radius: 30px;
+  background: rgba(26, 54, 93, 0.72);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #fff;
+  font-size: 20px;
+  font-family: 'Noto Serif SC', 'STSong', serif;
+  letter-spacing: 6px;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  pointer-events: none;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+}
+#easterEggPrompt.visible {
+  opacity: 1;
+}
+
+/* 气球上升关键帧 */
+@keyframes balloonRise {
+  0% {
+    transform: translateY(0);
+    opacity: 0.9;
+  }
+  70% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(calc(-100vh - 120px));
+    opacity: 0;
+  }
+}
+
+/* 气球横向晃动摇摆 */
+@keyframes balloonWobble {
+  0%, 100% { margin-left: 0; }
+  25%      { margin-left: 15px; }
+  75%      { margin-left: -15px; }
+}
+
+/* 气球容器 —— 无交互穿透 */
+#easterBalloonContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9997;
+  overflow: hidden;
+}
 </style>
 </head>
 <body>
@@ -3649,6 +3714,9 @@ document.addEventListener('DOMContentLoaded', init);
 
 <!-- 隐藏音频播放器 -->
 <audio id="musicAudio" preload="metadata" loop style="display:none"></audio>
+
+<!-- 底部彩蛋：五指张开触发气球动画（TF.js + handpose） -->
+<script defer src="easter-egg.js"></script>
 
 </body>
 </html>
