@@ -1449,6 +1449,17 @@ body::after {
   position: absolute; top: 20px; right: 28px; z-index: 10;
 }
 
+.book-viewer-rotate {
+  position: absolute; top: 20px; right: 100px; z-index: 10;
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 2px dashed rgba(255,255,255,0.35);
+  background: rgba(0,0,0,0.25);
+  color: #fff; font-size: 20px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.3s ease;
+}
+.book-viewer-rotate:hover { border-color: #fff; background: rgba(0,0,0,0.4); }
+
 .book-viewer-counter {
   position: absolute; top: 20px; left: 28px; z-index: 10;
   color: rgba(255,255,255,0.6);
@@ -2431,6 +2442,7 @@ body::after {
     <div class="book-viewer" id="bookViewer">
       <span class="book-viewer-counter" id="bookViewerCounter"></span>
       <button class="book-btn book-viewer-close" id="bookViewerClose">✕ 关闭</button>
+      <button class="book-viewer-rotate" id="bookViewerRotate" title="旋转照片">↻</button>
       <button class="book-viewer-nav prev" id="bookViewerPrev">‹</button>
       <button class="book-viewer-nav next" id="bookViewerNext">›</button>
       <div class="book-viewer-content" id="bookViewerContent">
@@ -3026,6 +3038,7 @@ function closeBook() {
 
 // ---- 全屏浏览器 ----
 let bookViewerIndex = 0;
+let bookViewerRotation = 0;  // 当前照片旋转角度
 let viewerSwipeStart = 0, viewerSwipeDelta = 0;
 
 function openBookViewer(index) {
@@ -3057,13 +3070,14 @@ function loadBookViewerItem() {
   content.classList.add('fading');
   setTimeout(() => {
     if (item.type === 'video') {
-      img.style.display = 'none';
+      img.style.display = 'none'; img.style.transform = '';
       video.style.display = 'block';
       video.src = item.url;
       video.load();
     } else {
       video.style.display = 'none'; video.pause(); video.src = '';
       img.style.display = 'block'; img.src = item.url; img.alt = item.caption;
+      bookViewerRotation = 0; img.style.transform = '';
     }
     counter.textContent = (bookViewerIndex + 1) + ' / ' + albumData.length;
     content.classList.remove('fading');
@@ -3081,8 +3095,17 @@ function bookViewerNext() {
   loadBookViewerItem();
 }
 
+function rotateBookViewer() {
+  const item = albumData[bookViewerIndex];
+  if (!item || item.type === 'video') return;
+  bookViewerRotation = (bookViewerRotation + 90) % 360;
+  const img = document.getElementById('bookViewerImg');
+  img.style.transform = 'rotate(' + bookViewerRotation + 'deg)';
+}
+
 function initBookViewer() {
   document.getElementById('bookViewerClose').addEventListener('click', (e) => { e.stopPropagation(); closeBookViewer(); });
+  document.getElementById('bookViewerRotate').addEventListener('click', (e) => { e.stopPropagation(); rotateBookViewer(); });
   document.getElementById('bookViewerPrev').addEventListener('click', (e) => { e.stopPropagation(); bookViewerPrev(); });
   document.getElementById('bookViewerNext').addEventListener('click', (e) => { e.stopPropagation(); bookViewerNext(); });
 
