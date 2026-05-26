@@ -3,6 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Content Security Policy —— 限制外部脚本/资源来源，防范 XSS 注入 -->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://fonts.googleapis.com;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  img-src 'self' data: blob: https:;
+  media-src 'self' blob: https://behrzhqqghhtjbtxhp.supabase.co;
+  font-src 'self' https://fonts.gstatic.com;
+  connect-src 'self' https://behrzhqqghhtjbtxhp.supabase.co https://cdn.jsdelivr.net https://storage.googleapis.com https://tfhub.dev;
+  frame-src 'none';
+  object-src 'none';
+  base-uri 'self';
+">
 <!-- 毛笔书法字体：Ma Shan Zheng（飞白笔锋）+ Zhi Mang Xing（飘逸行书）作为 fallback -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2489,6 +2502,17 @@ body::after {
 <script async src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 /* ============================================
+   HTML 转义工具 —— 防止动态内容注入 XSS 攻击
+   所有来自外部数据（服务器、用户上传、CDN）的
+   字符串在插入 innerHTML 前都经过此函数过滤
+   ============================================ */
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+/* ============================================
    Supabase 客户端初始化 (安全懒加载模式)
    CDN 异步加载，不阻塞页面；加载完成后自动可用
    ============================================ */
@@ -2565,15 +2589,19 @@ function buildMemberCards() {
     const card = document.createElement('div');
     card.className = 'member-card';
     card.setAttribute('data-index', i);
+    // 对成员数据做 HTML 转义，防止注入
+    const safePhoto = escapeHtml(member.photoUrl);
+    const safeCartoon = escapeHtml(member.cartoonUrl);
+    const safeName = escapeHtml(member.name);
     card.innerHTML = `
       <div class="card-frame">
-            <img class="photo-real" src="${member.photoUrl}" alt="${member.name}" loading="lazy">
-            <img class="cartoon-layer" src="${member.cartoonUrl}" alt="${member.name}卡通" loading="lazy">
+            <img class="photo-real" src="${safePhoto}" alt="${safeName}" loading="lazy">
+            <img class="cartoon-layer" src="${safeCartoon}" alt="${safeName}卡通" loading="lazy">
         <div class="texture-overlay"></div>
         <div class="card-corner-bottom"></div>
         <div class="card-corner-bottom right"></div>
       </div>
-      <div class="card-name">${member.name}</div>
+      <div class="card-name">${safeName}</div>
     `;
     grid.appendChild(card);
   });
@@ -2852,15 +2880,18 @@ function buildBookThumb(item, index) {
   const thumb = document.createElement('div');
   thumb.className = 'book-thumb';
   thumb.style.animationDelay = (index % ITEMS_PER_PAGE) * 0.06 + 's';
+  // 对来自外部数据的 URL 做 HTML 转义，防止恶意属性注入
+  const safeUrl = escapeHtml(item.url);
   if (item.type === 'video') {
     thumb.innerHTML = `
-      <video src="${item.url}" preload="metadata" muted playsinline
+      <video src="${safeUrl}" preload="metadata" muted playsinline
         onloadedmetadata="this.currentTime=0.5;this.pause()"
         onerror="this.style.display='none'"></video>
       <div class="book-thumb-video-icon"></div>
     `;
   } else {
-    thumb.innerHTML = `<img src="${item.url}" alt="${item.caption}" loading="lazy">`;
+    const safeCaption = escapeHtml(item.caption || '');
+    thumb.innerHTML = `<img src="${safeUrl}" alt="${safeCaption}" loading="lazy">`;
   }
   thumb.addEventListener('click', (e) => { e.stopPropagation(); openBookViewer(index); });
   return thumb;
@@ -3041,10 +3072,16 @@ async function loadAlbumFromServer() {
 
   albumData.length = 0;
   serverItems.forEach(item => {
+    // 验证 URL 格式：只接受 images/ 路径下的安全文件名，拒绝可疑 URL
+    const url = item.url || '';
+    if (!/^images\/[a-zA-Z0-9_\-]+\.(jpg|jpeg|png|gif|webp|mp4|webm|mov)$/i.test(url)) {
+      console.warn('安全警告：跳过非法的相册 URL:', url);
+      return;
+    }
     albumData.push({
       type: item.type,
-      url: item.url,
-      caption: captionMap[item.url] || item.url.split('/').pop().replace(/\.[^/.]+$/, ''),
+      url: url,
+      caption: captionMap[url] || url.split('/').pop().replace(/\.[^/.]+$/, ''),
     });
   });
 
@@ -3164,9 +3201,11 @@ function renderMusicPlaylist() {
     const item = document.createElement('div');
     item.className = 'music-playlist-item';
     if (i === musicCurrentIndex) item.classList.add('active');
+    // 歌名可能来自 Supabase 用户数据，加转义防 XSS
+    const safeName = escapeHtml(track.name);
     item.innerHTML = `
       <span class="music-playlist-index">${String(i + 1).padStart(2, '0')}</span>
-      <span class="music-playlist-name">${track.name}</span>
+      <span class="music-playlist-name">${safeName}</span>
       <span class="music-playlist-dur">${formatMusicTime(track.duration)}</span>
     `;
     item.addEventListener('click', () => {
