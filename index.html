@@ -22,6 +22,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Zhi+Mang+Xing&display=swap" rel="stylesheet">
+<!-- 3D照片球体组件样式 -->
+<link rel="stylesheet" href="css/photo-sphere.css">
 <title>501宿舍 | 电气2301 - 扬州职业技术大学</title>
 <style>
 /* ============================================
@@ -2545,6 +2547,9 @@ body::after {
 })();
 </script>
 <script async src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<!-- 3D照片球体组件依赖库（本地引入） -->
+<script src="lib/three.min.js"></script>
+<script src="js/photo-sphere.js"></script>
 <script>
 /* ============================================
    HTML 转义工具 —— 防止动态内容注入 XSS 攻击
